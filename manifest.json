@@ -1,0 +1,21 @@
+{
+  "name": "Controle de EPI - ALA Solutions",
+  "short_name": "EPI Control",
+  "description": "Sistema de Controle de Entrega e Devolução de EPIs para ALA Solutions e CONVAR.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "ala-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "ala-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
