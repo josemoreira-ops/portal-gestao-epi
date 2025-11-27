@@ -2662,39 +2662,36 @@
         // Função para enviar dados de admissão para Google Sheets
         async function sendAdmissaoToSheets(episSelecionados) {
     try {
-        const baseData = {
+        const data = {
             nome: document.getElementById('employeeName').value,
-            rg: document.getElementById('employeeRG').value,
-            cpf: document.getElementById('employeeCPF').value,
             profissao: document.getElementById('employeeFunction').value,
             empresa: document.getElementById('companySelect').options[
                 document.getElementById('companySelect').selectedIndex
-            ]?.text || ''
-        };
-
-        const episParaEnviar = episSelecionados.map(item => ({
-            nome: item.name,
-            quantidade: item.quantity
-        }));
-
-        const data = {
-            ...baseData,
+            ]?.text || '',
+            setor: document.getElementById('employeeSector').value || "",
+            dataAdmissao: document.getElementById('admissionDate').value || "",
+            dataEntrega: document.getElementById('clothesDeliveryDate').value || "",
             tipoDocumento: "Admissão",
-            epis: JSON.stringify(episParaEnviar)
+            epis: JSON.stringify(
+                episSelecionados.map(item => ({
+                    nome: item.name,
+                    quantidade: item.quantity
+                }))
+            )
         };
 
         await fetch(GOOGLE_SHEETS_CONFIG.UNIFIED, {
-            method: 'POST',
+            method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: new URLSearchParams(data).toString()
         });
 
-        console.log("Dados de admissão enviados para Google Sheets.");
-
+        console.log("Dados de admissão enviados.");
     } catch (error) {
-        console.error("Erro ao enviar dados de admissão:", error);
+        console.error("Erro ao enviar admissão:", error);
     }
 }
+
 
     async function sendDemissaoToSheets(tipo, dados) {
     try {
