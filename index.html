@@ -2662,22 +2662,25 @@
         // Função para enviar dados de admissão para Google Sheets
         async function sendAdmissaoToSheets(episSelecionados) {
     try {
+        // Data de entrega = data do primeiro EPI
+        const dataEntrega = episSelecionados.length > 0 ? episSelecionados[0].date : "";
+
+        // Lista de EPIs em formato texto
+        const listaEpis = episSelecionados
+            .map(item => `${item.name} (${item.quantity})`)
+            .join("; ");
+
         const data = {
             nome: document.getElementById('employeeName').value,
             profissao: document.getElementById('employeeFunction').value,
             empresa: document.getElementById('companySelect').options[
                 document.getElementById('companySelect').selectedIndex
             ]?.text || '',
-            setor: document.getElementById('employeeSector').value || "",
-            dataAdmissao: document.getElementById('admissionDate').value || "",
-            dataEntrega: document.getElementById('clothesDeliveryDate').value || "",
+            setor: document.getElementById('workSector').value,
+            dataAdmissao: document.getElementById('admissionDate').value,
+            dataEntrega: dataEntrega,
             tipoDocumento: "Admissão",
-            epis: JSON.stringify(
-                episSelecionados.map(item => ({
-                    nome: item.name,
-                    quantidade: item.quantity
-                }))
-            )
+            listaEpis: listaEpis
         };
 
         await fetch(GOOGLE_SHEETS_CONFIG.UNIFIED, {
@@ -2687,11 +2690,11 @@
         });
 
         console.log("Dados de admissão enviados.");
+
     } catch (error) {
         console.error("Erro ao enviar admissão:", error);
     }
 }
-
 
     async function sendDemissaoToSheets(tipo, dados) {
     try {
