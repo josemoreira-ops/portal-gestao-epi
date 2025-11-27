@@ -2689,47 +2689,52 @@ const data = {
             }
         }
 
-        // Função para enviar dados de demissão para Google Sheets
-        async function sendDemissaoToSheets(tipo, dados) {
-            try {
-                const baseData = {
-                    nome: document.getElementById('demissaoEmployeeName').value,
-                    rg: document.getElementById('demissaoEmployeeRG').value,
-                    cpf: document.getElementById('demissaoEmployeeCPF').value,
-                    profissao: document.getElementById('demissaoEmployeeFunction').value,
-                    empresa: document.getElementById('demissaoCompanySelect').options[document.getElementById('demissaoCompanySelect').selectedIndex]?.text || ''
-                };
+    async function sendDemissaoToSheets(tipo, dados) {
+    try {
+        const baseData = {
+            nome: document.getElementById('demissaoEmployeeName').value,
+            rg: document.getElementById('demissaoEmployeeRG').value,
+            cpf: document.getElementById('demissaoEmployeeCPF').value,
+            profissao: document.getElementById('demissaoEmployeeFunction').value,
+            empresa: document.getElementById('demissaoCompanySelect').options[
+                document.getElementById('demissaoCompanySelect').selectedIndex
+            ]?.text || ''
+        };
 
-                let tipoDocumento = '';
-                let episParaEnviar = [];
+        let tipoDocumento = '';
+        let episParaEnviar = [];
 
-                if (tipo === 'devolucao') {
-                    tipoDocumento = 'Demissão - Termo de Devolução';
-                    episParaEnviar = dados.map(item => ({ nome: item.name, quantidade: item.quantity }));
-                } else if (tipo === 'posse') {
-                    tipoDocumento = 'Demissão - Declaração de Posse';
-                    episParaEnviar = dados.map(item => ({ nome: item.name, quantidade: item.quantity }));
-                }
-
-                const data = {
-                    ...baseData,
-                    tipoDocumento: tipoDocumento,
-                    epis: JSON.stringify(episParaEnviar)
-                };
-
-                // Enviar para Google Sheets
-                const response = await fetch(GOOGLE_SHEETS_CONFIG.UNIFIED, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: new URLSearchParams(data).toString()
-                });
-                console.log(`Dados de demissão (${tipoDocumento}) enviados para Google Sheets`);
-            } catch (error) {
-                console.error(`Erro ao enviar dados de demissão (${tipo}):`, error);
-            }
+        if (tipo === 'devolucao') {
+            tipoDocumento = 'Demissão - Termo de Devolução';
+            episParaEnviar = dados.map(item => ({ nome: item.name, quantidade: item.quantity }));
+        } else if (tipo === 'posse') {
+            tipoDocumento = 'Demissão - Declaração de Posse';
+            episParaEnviar = dados.map(item => ({ nome: item.name, quantidade: item.quantity }));
         }
+
+        // 🔥 O MAIS IMPORTANTE: enviar o tipoDocumento para o Apps Script
+        const data = {
+            ...baseData,
+            tipoDocumento: tipoDocumento,
+            epis: JSON.stringify(episParaEnviar)
+        };
+
+        // Enviar para Google Sheets
+        const response = await fetch(GOOGLE_SHEETS_CONFIG.UNIFIED, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams(data).toString()
+        });
+
+        console.log(`Dados de demissão (${tipoDocumento}) enviados para Google Sheets`);
+
+    } catch (error) {
+        console.error(`Erro ao enviar dados de demissão (${tipo}):`, error);
+    }
+}
+
 
         function generatePDF() {
             // Obter nome do funcionário
