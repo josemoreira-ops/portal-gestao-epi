@@ -2660,34 +2660,41 @@
         };
 
         // Função para enviar dados de admissão para Google Sheets
-        async function sendAdmissaoToSheets() {
-            try {
-                // Coletar dados do formulário
-const data = {
-                    tipoDocumento: "Admissão - Ficha EPI",
-                    nome: document.getElementById("employeeName").value,
-                    empresa: document.getElementById("companySelect").options[document.getElementById("companySelect").selectedIndex]?.text || "",
-                    profissao: document.getElementById("professionSelect").value,
-                    matricula: document.getElementById("employeeId").value,
-                    dataAdmissao: document.getElementById("admissionDate").value,
-                    setor: document.getElementById("workSector").value,
-                    telefone: document.getElementById("phone").value,
-                    epis: JSON.stringify(currentEpis.filter(epi => epi.quantity > 0).map(epi => ({ nome: epi.name, quantidade: epi.quantity })))
-                };
+        async function sendAdmissaoToSheets(episSelecionados) {
+    try {
+        const baseData = {
+            nome: document.getElementById('employeeName').value,
+            rg: document.getElementById('employeeRG').value,
+            cpf: document.getElementById('employeeCPF').value,
+            profissao: document.getElementById('employeeFunction').value,
+            empresa: document.getElementById('companySelect').options[
+                document.getElementById('companySelect').selectedIndex
+            ]?.text || ''
+        };
 
-                // Enviar para Google Sheets
-                const response = await fetch(GOOGLE_SHEETS_CONFIG.UNIFIED, {
-                    method: 'POST',
-                    headers: {
-                        "Content-Type": "application/x-www-form-urlencoded",
-                    },
-                    body: new URLSearchParams(data).toString()
-                });
-                console.log('Dados de admissão enviados para Google Sheets');
-            } catch (error) {
-                console.error('Erro ao enviar dados de admissão:', error);
-            }
-        }
+        const episParaEnviar = episSelecionados.map(item => ({
+            nome: item.name,
+            quantidade: item.quantity
+        }));
+
+        const data = {
+            ...baseData,
+            tipoDocumento: "Admissão",
+            epis: JSON.stringify(episParaEnviar)
+        };
+
+        await fetch(GOOGLE_SHEETS_CONFIG.UNIFIED, {
+            method: 'POST',
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams(data).toString()
+        });
+
+        console.log("Dados de admissão enviados para Google Sheets.");
+
+    } catch (error) {
+        console.error("Erro ao enviar dados de admissão:", error);
+    }
+}
 
     async function sendDemissaoToSheets(tipo, dados) {
     try {
