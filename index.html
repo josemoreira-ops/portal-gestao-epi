@@ -2660,13 +2660,13 @@
         };
 
         // Função para enviar dados de admissão para Google Sheets
-        async function sendAdmissaoToSheets(selectedItems) {
+        async function sendAdmissaoToSheets(selectedItemData) {
     try {
         // Data de entrega = data do primeiro EPI
-        const dataEntrega = selectedItems.length > 0 ? selectedItems[0].date : "";
+        const dataEntrega = selectedItemData.length > 0 ? selectedItemData[0].date : "";
 
         // Lista de EPIs em formato texto
-        const listaEpis = selectedItems
+        const listaEpis = selectedItemData
             .map(item => `${item.name} (${item.quantity})`)
             .join("; ");
 
