@@ -1,198 +1,394 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Portal de Gestão de EPI</title>
-  <link rel="stylesheet" href="styles.css" />
 
-  <!-- html2pdf -->
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;margin:20px;color:#222}
+    h1{font-size:20px}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .col{flex:1;min-width:200px}
+    label{display:block;font-weight:600;margin-bottom:6px}
+    input,select,button{padding:8px;border:1px solid #ccc;border-radius:6px}
+    #epiList .epi-item{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border:1px solid #eee;border-radius:6px;margin-bottom:6px}
+    .section{margin:18px 0;padding:12px;border:1px solid #f0f0f0;border-radius:8px;background:#fafafa}
+    .actions{display:flex;gap:8px;align-items:center}
+    .btn-primary{background:#1a73e8;color:#fff;border:none}
+    .btn-danger{background:#e02b2b;color:#fff;border:none}
+    small.note{color:#666}
+  </style>
+
+  <!-- html2pdf (CDN) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
-  <!-- Seu HTML original permanece aqui (não alterado) -->
-  <div id="app">
-     <!-- ... Todo o HTML visual permanece intacto ... -->
+  <h1>Portal de Gestão de EPI — Teste</h1>
+
+  <!-- Hidden: config do Web App -->
+  <script>
+    const GOOGLE_SHEETS_CONFIG = {
+      // Já com sua URL de Web App (use a sua real publicada)
+      UNIFIED: 'https://script.google.com/macros/s/AKfycbxc6SXsS3NjGxyAnYSvKncjemv3jGYa0G9CDylT_n9s8_lrDP81LnBjVl3xqwFuU0s/exec'
+    };
+  </script>
+
+  <!-- Form Type control -->
+  <div class="section">
+    <label>Tipo de operação</label>
+    <select id="formType">
+      <option value="admissao">Admissão</option>
+      <option value="demissao-devolucao">Demissão - Termo de Devolução</option>
+      <option value="demissao-posse">Demissão - Declaração de Posse</option>
+    </select>
+  </div>
+
+  <!-- ADMISSÃO block -->
+  <div id="admissaoArea" class="section">
+    <h2>Admissão</h2>
+    <div class="row">
+      <div class="col">
+        <label for="employeeName">Nome completo</label>
+        <input id="employeeName" type="text" placeholder="Nome do colaborador" />
+      </div>
+      <div class="col">
+        <label for="employeeFunction">Função</label>
+        <select id="employeeFunction">
+          <option value="">-- selecione --</option>
+          <option value="Pintor">Pintor</option>
+          <option value="Pedreiro">Pedreiro</option>
+          <option value="Eletricista">Eletricista</option>
+        </select>
+      </div>
+      <div class="col">
+        <label for="companySelect">Coligada</label>
+        <select id="companySelect">
+          <option value="Convar">Convar</option>
+          <option value="AlaSolutions">AlaSolutions</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:12px">
+      <div class="col">
+        <label for="workSector">Setor</label>
+        <input id="workSector" type="text" placeholder="Setor" />
+      </div>
+      <div class="col">
+        <label for="admissionDate">Data de Admissão</label>
+        <input id="admissionDate" type="date" />
+      </div>
+      <div class="col">
+        <label>&nbsp;</label>
+        <div class="actions">
+          <button id="loadDefaultEpisBtn">Carregar EPIs por Função</button>
+          <button id="clearEpisBtn" class="">Limpar EPIs</button>
+        </div>
+      </div>
+    </div>
+
+    <hr/>
+
+    <!-- EPI list controls -->
+    <div style="display:flex;gap:12px;align-items:flex-end;margin-top:8px">
+      <div style="flex:2">
+        <label for="epiName">EPI (nome)</label>
+        <input id="epiName" placeholder="Ex: Camisa" />
+      </div>
+      <div style="width:120px">
+        <label for="epiQty">Quantidade</label>
+        <input id="epiQty" type="number" min="1" value="1" />
+      </div>
+      <div style="width:160px">
+        <label for="epiDate">Data entrega (opcional)</label>
+        <input id="epiDate" type="date" />
+      </div>
+      <div style="width:120px">
+        <label>&nbsp;</label>
+        <button id="addEpiBtn" class="btn-primary">Adicionar</button>
+      </div>
+    </div>
+
+    <!-- Lista de EPIs selecionados -->
+    <div id="epiList" style="margin-top:12px"></div>
+
+    <div style="margin-top:12px" class="actions">
+      <button id="generateBtn" class="btn-primary">Gerar / Enviar</button>
+      <small class="note">Ao clicar, será gerado PDF e enviado para Google Sheets.</small>
+    </div>
+  </div>
+
+  <!-- DEMISSÃO block (simples) -->
+  <div id="demissaoArea" style="display:none" class="section">
+    <h2>Demissão</h2>
+    <div class="row">
+      <div class="col">
+        <label for="demissaoEmployeeName">Nome</label>
+        <input id="demissaoEmployeeName" />
+      </div>
+      <div class="col">
+        <label for="demissaoEmployeeRG">RG</label>
+        <input id="demissaoEmployeeRG" />
+      </div>
+      <div class="col">
+        <label for="demissaoEmployeeCPF">CPF</label>
+        <input id="demissaoEmployeeCPF" />
+      </div>
+      <div class="col">
+        <label for="demissaoEmployeeFunction">Função</label>
+        <input id="demissaoEmployeeFunction" />
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <label>EPIs nesta demissão (adicione manualmente)</label>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <input id="demissaoEpiName" placeholder="Nome EPI" />
+        <input id="demissaoEpiQty" type="number" min="1" value="1" style="width:100px" />
+        <button id="demissaoAddEpiBtn">Adicionar</button>
+      </div>
+      <div id="demissaoEpiList" style="margin-top:8px"></div>
+
+      <div style="margin-top:12px" class="actions">
+        <button id="sendDemissaoDevolucao" class="btn-primary">Enviar Termo de Devolução</button>
+        <button id="sendDemissaoPosse" class="btn-primary">Enviar Declaração de Posse</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- area para gerar pdf (conteúdo simples) -->
+  <div id="pdfArea" style="display:none">
+    <h3>Documento</h3>
+    <div id="pdfContent"></div>
   </div>
 
 <script>
-/********************************************************************
- *  🔥 VERSÃO CORRIGIDA DO SCRIPT – SEM DUPLICAÇÕES
- *  - Lista global de EPIs: selectedItems
- *  - Admissão envia corretamente para o Apps Script
- *  - Demissão permanece funcionando
- ********************************************************************/
+/* -------------------------
+   Lógica consolidada (JS)
+   ------------------------- */
 
-// ========= VARIÁVEIS GLOBAIS =========
-let selectedItems = [];   // Lista REAL de EPIs escolhidos
-let currentFunctionDefaultEPIs = []; // EPIs carregados pela função
+ // lista global que mantém os EPIs selecionados (Admissão)
+ let selectedItems = [];
 
+ // EPIs padrões por função (exemplo)
+ const defaultEPIsMap = {
+   "Pintor": [
+     { name: "Camisa", quantity: 2, date: "" },
+     { name: "Bota", quantity: 1, date: "" }
+   ],
+   "Pedreiro": [
+     { name: "Capacete", quantity: 1, date: "" },
+     { name: "Bota", quantity: 1, date: "" }
+   ],
+   "Eletricista": [
+     { name: "Luvas isolantes", quantity: 1, date: "" }
+   ]
+ };
 
-/********************************************************************
- *  🔹 FUNÇÃO: Carregar EPIs da função escolhida
- ********************************************************************/
-function loadEPIsForFunction() {
-    const role = document.getElementById("employeeFunction").value;
+ // util
+ function $(id){return document.getElementById(id)}
 
-    // Limpa lista atual
-    selectedItems = [];
-    const epiContainer = document.getElementById("epiList");
-    epiContainer.innerHTML = "";
+/* -------------------------
+   UI handlers
+   ------------------------- */
 
-    // 🔥 MAPA DE FUNÇÃO → EPIs padrão (adicione mais se quiser)
-    const defaultEPIsMap = {
-        "Pintor": [
-            { name: "Camisa UV", quantity: 1 },
-            { name: "Bota", quantity: 1 },
-            { name: "Luva", quantity: 1 }
-        ],
-        "Pedreiro": [
-            { name: "Capacete", quantity: 1 },
-            { name: "Bota", quantity: 1 },
-            { name: "Luva", quantity: 2 }
-        ]
-    };
+ // mostrar/esconder areas conforme tipo
+ $('formType').addEventListener('change', e=>{
+   const v = e.target.value;
+   $('admissaoArea').style.display = v === 'admissao' ? 'block' : 'none';
+   $('demissaoArea').style.display = v.startsWith('demissao') ? 'block' : 'none';
+});
 
-    currentFunctionDefaultEPIs = defaultEPIsMap[role] || [];
+ // load default epis for current function (Admissão)
+ $('loadDefaultEpisBtn').addEventListener('click', ()=>{
+   const role = $('employeeFunction').value;
+   const defaults = defaultEPIsMap[role] || [];
+   selectedItems = []; // reset
+   defaults.forEach(d=>{
+     // if date input exists take it empty; user can edit
+     selectedItems.push({ name: d.name, quantity: d.quantity, date: $('admissionDate').value || "" });
+   });
+   renderEPIList();
+});
 
-    currentFunctionDefaultEPIs.forEach(item => addEPI(item.name, item.quantity));
+ $('clearEpisBtn').addEventListener('click', ()=>{
+   selectedItems = [];
+   renderEPIList();
+});
+
+ // adicionar EPI manualmente
+ $('addEpiBtn').addEventListener('click', ()=>{
+   const name = $('epiName').value && $('epiName').value.trim();
+   const qty = parseInt($('epiQty').value) || 1;
+   const date = $('epiDate').value || $('admissionDate').value || new Date().toISOString().slice(0,10);
+
+   if(!name){
+     alert('Informe o nome do EPI');
+     return;
+   }
+   selectedItems.push({ name, quantity: qty, date });
+   $('epiName').value=''; $('epiQty').value=1; $('epiDate').value='';
+   renderEPIList();
+});
+
+ function renderEPIList(){
+   const c = $('epiList');
+   c.innerHTML = '';
+   selectedItems.forEach((it, i)=>{
+     const div = document.createElement('div');
+     div.className = 'epi-item';
+     div.innerHTML = `<div><b>${it.name}</b> — Qtde: ${it.quantity} <small style="color:#666;margin-left:8px">(${it.date||'sem data'})</small></div>
+                      <div><button onclick="removeEPI(${i})" class="btn-danger">Remover</button></div>`;
+     c.appendChild(div);
+   });
+ }
+ window.removeEPI = function(index){
+   selectedItems.splice(index,1);
+   renderEPIList();
 }
 
+/* -------------------------
+   DEMISSÃO handlers (simples)
+   ------------------------- */
 
-/********************************************************************
- *  🔹 FUNÇÃO: Adicionar item à lista de EPIs escolhidos
- ********************************************************************/
-function addEPI(name, quantity) {
-    const date = new Date().toISOString().split("T")[0]; // Data padrão
+ let demissaoEpis = [];
+ $('demissaoAddEpiBtn').addEventListener('click', ()=>{
+   const name = $('demissaoEpiName').value.trim();
+   const qty = parseInt($('demissaoEpiQty').value) || 1;
+   if(!name) return alert('Informe o EPI para demissão');
+   demissaoEpis.push({name, quantity: qty});
+   $('demissaoEpiName').value=''; $('demissaoEpiQty').value=1;
+   renderDemissaoEpiList();
+});
 
-    const epi = { name, quantity, date };
-    selectedItems.push(epi);
-    renderEPIList();
+ function renderDemissaoEpiList(){
+   const c = $('demissaoEpiList'); c.innerHTML='';
+   demissaoEpis.forEach((it,i)=>{
+     const div=document.createElement('div'); div.className='epi-item';
+     div.innerHTML = `<div><b>${it.name}</b> — Qtde: ${it.quantity}</div>
+                      <div><button onclick="removeDemissaoEpi(${i})" class="btn-danger">Remover</button></div>`;
+     c.appendChild(div);
+   });
 }
+ window.removeDemissaoEpi=function(i){ demissaoEpis.splice(i,1); renderDemissaoEpiList(); }
+
+/* -------------------------
+   Envio para Google Sheets
+   ------------------------- */
+
+ async function sendAdmissaoToSheets(){
+   try{
+     // Validações
+     if(selectedItems.length === 0){
+       alert('Selecione ao menos 1 EPI antes de enviar a admissão.');
+       return;
+     }
+     const dataEntrega = selectedItems[0].date || $('admissionDate').value || new Date().toISOString().slice(0,10);
+     const listaEpis = selectedItems.map(e => `${e.name} (${e.quantity})`).join('; ');
+
+     const payload = {
+       tipoDocumento: 'Admissão',
+       nome: $('employeeName').value || '',
+       profissao: $('employeeFunction').value || '',
+       empresa: $('companySelect').value || '',
+       setor: $('workSector').value || '',
+       dataAdmissao: $('admissionDate').value || '',
+       dataEntrega: dataEntrega,
+       listaEpis: listaEpis
+     };
+
+     await fetch(GOOGLE_SHEETS_CONFIG.UNIFIED, {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+       body: new URLSearchParams(payload).toString()
+     });
+
+     console.log('Admissão enviada com sucesso');
+     alert('Admissão enviada com sucesso (verifique a aba Admissão na planilha).');
+
+     // opcional: limpar formulário
+     // selectedItems=[]; renderEPIList();
+
+   }catch(err){
+     console.error('Erro ao enviar admissão:', err);
+     alert('Erro ao enviar admissão. Veja console.');
+   }
+ }
+
+ async function sendDemissaoToSheets(tipo){
+   try{
+     const baseData = {
+       nome: $('demissaoEmployeeName').value || '',
+       rg: $('demissaoEmployeeRG').value || '',
+       cpf: $('demissaoEmployeeCPF').value || '',
+       profissao: $('demissaoEmployeeFunction').value || '',
+       empresa: $('companySelect').value || ''
+     };
+     const episToSend = demissaoEpis.map(i=>({nome:i.name, quantidade:i.quantity}));
+
+     const payload = {
+       ...baseData,
+       tipoDocumento: tipo === 'devolucao' ? 'Demissão - Termo de Devolução' : 'Demissão - Declaração de Posse',
+       epis: JSON.stringify(episToSend)
+     };
+
+     await fetch(GOOGLE_SHEETS_CONFIG.UNIFIED, {
+       method: 'POST',
+       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+       body: new URLSearchParams(payload).toString()
+     });
+
+     console.log('Demissão enviada:', payload.tipoDocumento);
+     alert('Demissão enviada com sucesso (verifique a aba Demissão).');
+
+   }catch(err){
+     console.error('Erro ao enviar demissão:', err);
+     alert('Erro ao enviar demissão. Veja console.');
+   }
+ }
+
+/* -------------------------
+   PDF + gatilho principal
+   ------------------------- */
+
+ $('generateBtn').addEventListener('click', async ()=>{
+   const type = $('formType').value;
+
+   try{
+     // Primeiro, garantir que gera e envia conforme tipo
+     if(type === 'admissao'){
+       await sendAdmissaoToSheets();
+     } else if(type === 'demissao-devolucao'){
+       await sendDemissaoToSheets('devolucao');
+     } else if(type === 'demissao-posse'){
+       await sendDemissaoToSheets('posse');
+     }
+
+     // Gerar PDF simples (conteúdo mínimo)
+     const content = document.createElement('div');
+     content.innerHTML = `<h2>Documento - ${type}</h2>
+       <p>Nome: ${ type === 'admissao' ? $('employeeName').value : $('demissaoEmployeeName').value }</p>
+       <p>EPIs: ${ type === 'admissao' ? selectedItems.map(e=>e.name+' ('+e.quantity+')').join('; ') : demissaoEpis.map(e=>e.name+' ('+e.quantity+')').join('; ') }</p>
+     `;
+     document.body.appendChild(content);
+     // html2pdf (o script está carregado no head)
+     html2pdf().from(content).save().then(()=> content.remove()).catch(()=> content.remove());
+
+   }catch(err){
+     console.error('Erro no processo gerar/enviar:', err);
+   }
+});
 
 
-/********************************************************************
- *  🔹 FUNÇÃO: Remover item
- ********************************************************************/
-function removeEPI(index) {
-    selectedItems.splice(index, 1);
-    renderEPIList();
-}
-
-
-/********************************************************************
- *  🔹 FUNÇÃO: Atualizar a lista visual na tela
- ********************************************************************/
-function renderEPIList() {
-    const container = document.getElementById("epiList");
-    container.innerHTML = "";
-
-    selectedItems.forEach((item, index) => {
-        const div = document.createElement("div");
-        div.classList.add("epi-item");
-        div.innerHTML = `
-            <span><b>${item.name}</b> — Qtde: ${item.quantity}</span>
-            <button onclick="removeEPI(${index})">Remover</button>
-        `;
-        container.appendChild(div);
-    });
-}
-
-
-/********************************************************************
- *  🔹 FUNÇÃO: Enviar ADMISSÃO para Google Sheets
- ********************************************************************/
-async function sendAdmissaoToSheets() {
-    try {
-        if (selectedItems.length === 0) {
-            alert("Selecione ao menos um EPI antes de enviar.");
-            return;
-        }
-
-        const dataEntrega = selectedItems[0].date; // Uma única data
-        const listaEpis = selectedItems.map(e => `${e.name} (${e.quantity})`).join("; ");
-
-        const data = {
-            tipoDocumento: "Admissão",
-            nome: document.getElementById("employeeName").value,
-            profissao: document.getElementById("employeeFunction").value,
-            empresa: document.getElementById("companySelect").options[
-                document.getElementById("companySelect").selectedIndex
-            ].text,
-            setor: document.getElementById("workSector").value,
-            dataAdmissao: document.getElementById("admissionDate").value,
-            dataEntrega: dataEntrega,
-            listaEpis: listaEpis
-        };
-
-        await fetch(GOOGLE_SHEETS_CONFIG.UNIFIED, {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: new URLSearchParams(data).toString()
-        });
-
-        console.log("✔ Admissão enviada com sucesso!");
-
-    } catch (err) {
-        console.error("Erro ao enviar admissão:", err);
-    }
-}
-
-
-/********************************************************************
- *  🔹 FUNÇÃO: Enviar DEMISSÃO (mantida como estava)
- ********************************************************************/
-async function sendDemissaoToSheets(tipo, dados) {
-    try {
-        const baseData = {
-            nome: document.getElementById('demissaoEmployeeName').value,
-            rg: document.getElementById('demissaoEmployeeRG').value,
-            cpf: document.getElementById('demissaoEmployeeCPF').value,
-            profissao: document.getElementById('demissaoEmployeeFunction').value,
-            empresa: document.getElementById('demissaoCompanySelect').options[
-                document.getElementById('demissaoCompanySelect').selectedIndex
-            ].text
-        };
-
-        let tipoDocumento = '';
-        let episParaEnviar = dados.map(item => ({ nome: item.name, quantidade: item.quantity }));
-
-        if (tipo === 'devolucao') tipoDocumento = 'Demissão - Termo de Devolução';
-        if (tipo === 'posse') tipoDocumento = 'Demissão - Declaração de Posse';
-
-        const data = {
-            ...baseData,
-            tipoDocumento,
-            epis: JSON.stringify(episParaEnviar)
-        };
-
-        await fetch(GOOGLE_SHEETS_CONFIG.UNIFIED, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: new URLSearchParams(data).toString()
-        });
-
-        console.log("✔ Demissão enviada: " + tipoDocumento);
-
-    } catch (err) {
-        console.error("Erro ao enviar demissão:", err);
-    }
-}
-
-/********************************************************************
- *  🔹 Função de gerar PDF (mantida, mas sem quebrar admissão)
- ********************************************************************/
-function generatePDF() {
-    const formType = document.getElementById("formType").value;
-
-    if (formType === "admissao") sendAdmissaoToSheets();
-    if (formType === "demissao-devolucao") sendDemissaoToSheets("devolucao", selectedItems);
-    if (formType === "demissao-posse") sendDemissaoToSheets("posse", selectedItems);
-
-    const element = document.getElementById("pdfArea");
-    html2pdf().from(element).save();
-}
-
+/* -------------------------
+   Inicialização -- se quiser carregar defaults
+   ------------------------- */
+ window.addEventListener('load', ()=>{
+   // opcional: renderizar lista vazia
+   renderEPIList();
+   renderDemissaoEpiList();
+});
 </script>
 </body>
 </html>
