@@ -2744,23 +2744,99 @@
 
 
         function generatePDF() {
-            // Obter nome do funcionário
-            const employeeName = document.getElementById('employeeName').value.trim().toUpperCase();
-            const pdfFileName = `FICHA EPI - ${employeeName || 'COLABORADOR'}.pdf`;
-            
-            // Enviar dados para Google Sheets após gerar PDF
-            sendAdmissaoToSheets();
+    // Nome do arquivo PDF
+    const employeeName = (document.getElementById('employeeName')?.value || '').trim().toUpperCase();
+    const pdfFileName = `FICHA EPI - ${employeeName || 'COLABORADOR'}.pdf`;
 
-            const element = document.getElementById("previewSection");
-            const opt = {
-                margin: 0.5,
-                filename: pdfFileName,
-                image: { type: "jpeg", quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: "in", format: "a4", orientation: "portrait" }
-            };
-            html2pdf().from(element).set(opt).save();
+    try {
+        // Tentar montar a matriz de EPIs a partir de currentEpis (fonte primária)
+        let episArray = [];
+        if (typeof currentEpis !== 'undefined' && Array.isArray(currentEpis) && currentEpis.length > 0) {
+            episArray = currentEpis
+                .filter(e => e && (e.quantity && e.quantity > 0 || e.type)) // filtra itens válidos
+                .map(e => ({
+                    name: e.name || '',
+                    quantity: e.quantity || 1,
+                    date: e.date || document.getElementById('admissionDate')?.value || '',
+                    ca: e.ca || '',
+                    size: e.size || '',
+                    type: e.type || 'normal'
+                }));
+        } else {
+            // Fallback: tentar ler tabela epiTableBody se currentEpis não existir ou estiver vazia
+            const tbody = document.getElementById('epiTableBody');
+            if (tbody) {
+                const rows = Array.from(tbody.querySelectorAll('tr')).filter(r => !r.classList.contains('empty-row'));
+                episArray = rows.map(r => {
+                    const cells = r.querySelectorAll('td');
+                    const name = (cells[2]?.textContent || '').trim();
+                    const qty = parseInt((cells[3]?.querySelector('input')?.value) || (cells[3]?.textContent) || '1') || 1;
+                    const size = (cells[4]?.querySelector('select')?.value) || (cells[4]?.textContent || '').trim();
+                    const type = (cells[5]?.querySelector('select')?.value) || (cells[5]?.textContent || '').trim();
+                    const date = document.getElementById('admissionDate')?.value || '';
+                    return { name, quantity: qty, date, size, type, ca: '' };
+                }).filter(i => i.name);
+            }
         }
+
+        // GUARDA: a nova matriz de itens que iremos enviar à planilha
+        console.log('Matriz de EPIs (para enviar):', episArray);
+
+        // Validar que há itens antes de enviar
+        if (!episArray || episArray.length === 0) {
+            alert('Nenhum EPI definido para envio. Carregue ou adicione EPIs antes de gerar o PDF.');
+            return;
+        }
+
+        // Enviar os dados de admissão para o Google Sheets (a função existente aceita o array)
+        // Observação: sendAdmissaoToSheets espera um parâmetro (episSelecionados / selectedItems)
+        if (typeof sendAdmissaoToSheets === 'function') {
+            // chama a função que já existe no seu arquivo, passando a matriz
+            sendAdmissaoToSheets(episArray);
+        } else {
+            console.warn('sendAdmissaoToSheets não encontrada. Verifique o nome da função.');
+        }
+
+        // Montar conteúdo simples para o PDF (você pode adaptar para usar o preview real)
+        const content = document.createElement('div');
+        content.style.padding = '12px';
+        content.style.fontFamily = 'Arial, sans-serif';
+        content.innerHTML = `<h2 style="margin-bottom:6px">FICHA EPI</h2>
+            <p><strong>Nome:</strong> ${employeeName || ''}</p>
+            <p><strong>Função:</strong> ${document.getElementById('employeeFunction')?.value || document.getElementById('professionSelect')?.value || ''}</p>
+            <p><strong>Setor:</strong> ${document.getElementById('workSector')?.value || ''}</p>
+            <p><strong>Data de Admissão:</strong> ${document.getElementById('admissionDate')?.value || ''}</p>
+            <hr/>
+            <h3>EPIs</h3>
+            <ul>${episArray.map(i => `<li>${i.name} — Qtde: ${i.quantity}${i.date ? ' — Data: '+i.date : ''}</li>`).join('')}</ul>
+        `;
+
+        // Apêndice ao DOM (temporário)
+        document.body.appendChild(content);
+
+        // Geração do PDF via html2pdf (necessita do script html2pdf carregado no head)
+        if (typeof html2pdf === 'function') {
+            html2pdf().from(content).set({ filename: pdfFileName }).save()
+                .then(() => {
+                    // limpeza após salvar
+                    content.remove();
+                })
+                .catch(err => {
+                    console.error('Erro ao gerar PDF:', err);
+                    content.remove();
+                });
+        } else {
+            // Fallback: usar window.print() se html2pdf não estiver disponível
+            console.warn('html2pdf não encontrado — fazendo fallback para window.print()');
+            window.print();
+            content.remove();
+        }
+
+    } catch (err) {
+        console.error('Erro em generatePDF:', err);
+        alert('Erro ao gerar documento. Veja console para mais detalhes.');
+    }
+}
 
         // Salvar dados no localStorage
         function saveData() {
