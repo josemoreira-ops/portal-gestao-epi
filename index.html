@@ -2473,6 +2473,7 @@
                                     <option value="holly" ${epi.type === 'holly' ? 'selected' : ''}>Holly</option>
                                     <option value="equant" ${epi.type === 'equant' ? 'selected' : ''}>Equant</option>
                                     <option value="multiforms" ${epi.type === 'multiforms' ? 'selected' : ''}>Multiforms</option>
+									<option value="alsco" ${epi.type === 'alsco' ? 'selected' : ''}>ALSCO</option>
                                 </select>
                                 ${(epi.type === 'holly' || epi.type === 'equant') ? 
                                     `<button class="email-button" onclick="openEmailModal('${epi.type}', ${index})" title="Enviar e-mail para a loja">
@@ -2558,6 +2559,7 @@
                                         <option value="holly" ${extraEpi?.type === 'holly' ? 'selected' : ''}>Holly</option>
                                         <option value="equant" ${extraEpi?.type === 'equant' ? 'selected' : ''}>Equant</option>
                                         <option value="multiforms" ${extraEpi?.type === 'multiforms' ? 'selected' : ''}>Multiforms</option>
+										<option value="alsco" ${extraEpi?.type === 'alsco' ? 'selected' : ''}>ALSCO</option>
                                     </select>
                                     ${(extraEpi?.type === 'holly' || extraEpi?.type === 'equant') ? 
                                         `<button class="email-button" onclick="openEmailModal('${extraEpi.type}', ${extraIndex})" title="Enviar e-mail para a loja">
