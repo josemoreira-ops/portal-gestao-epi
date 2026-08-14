@@ -2661,36 +2661,15 @@
             
         };
 
-        // ==========================================
-// 1. FUNÇÃO DE ADMISSÃO (Mantém o parâmetro original e captura o tamanho)
-// ==========================================
-async function sendAdmissaoToSheets(selectedItems) {
+        // Função para enviar dados de admissão para Google Sheets
+        async function sendAdmissaoToSheets(selectedItems) {
     try {
-        // Se selectedItems não vier preenchido, tentamos varrer a tabela de forma segura
-        let itensParaProcessar = selectedItems;
-        
-        if (!itensParaProcessar || itensParaProcessar.length === 0) {
-            itensParaProcessar = [];
-            document.querySelectorAll('#tabelaEPIs tbody tr').forEach(row => {
-                let nome = row.cells[0]?.innerText.trim() || "";
-                let tamanho = row.cells[1]?.querySelector('select, input')?.value.trim() || "";
-                let qtd = parseInt(row.cells[2]?.querySelector('input')?.value) || 0;
+        // Data de entrega = data do primeiro EPI
+        const dataEntrega = selectedItems.length > 0 ? selectedItems[0].date : "";
 
-                if (qtd > 0 && nome) {
-                    itensParaProcessar.push({ name: nome, quantity: qtd, tamanho: tamanho });
-                }
-            });
-        }
-
-        // Data de entrega = data do primeiro EPI ou data atual
-        const dataEntrega = itensParaProcessar.length > 0 && itensParaProcessar[0].date ? itensParaProcessar[0].date : new Date().toISOString().split('T')[0];
-
-        // Lista de EPIs formatada com o tamanho (se houver)
-        const listaEpis = itensParaProcessar
-            .map(item => {
-                let tamStr = item.tamanho ? ` (Tam: ${item.tamanho})` : "";
-                return `${item.name}${tamStr} (${item.quantity})`;
-            })
+        // Lista de EPIs em formato texto
+        const listaEpis = selectedItems
+            .map(item => `${item.name} (${item.quantity})`)
             .join("; ");
 
         const data = {
@@ -2712,18 +2691,14 @@ async function sendAdmissaoToSheets(selectedItems) {
             body: new URLSearchParams(data).toString()
         });
 
-        console.log("Dados de admissão enviados com sucesso.");
+        console.log("Dados de admissão enviados.");
 
     } catch (error) {
         console.error("Erro ao enviar admissão:", error);
     }
 }
 
-
-// ==========================================
-// 2. FUNÇÃO DE DEMISSÃO
-// ==========================================
-async function sendDemissaoToSheets(tipo, dados) {
+    async function sendDemissaoToSheets(tipo, dados) {
     try {
         const baseData = {
             nome: document.getElementById('demissaoEmployeeName').value,
@@ -2731,7 +2706,7 @@ async function sendDemissaoToSheets(tipo, dados) {
             cpf: document.getElementById('demissaoEmployeeCPF').value,
             profissao: document.getElementById('demissaoEmployeeFunction').value,
             empresa: document.getElementById('demissaoCompanySelect').options[
-                document.getElementById('demissaoCompanySelect'].selectedIndex
+                document.getElementById('demissaoCompanySelect').selectedIndex
             ]?.text || ''
         };
 
@@ -2740,51 +2715,11 @@ async function sendDemissaoToSheets(tipo, dados) {
 
         if (tipo === 'devolucao') {
             tipoDocumento = 'Demissão - Termo de Devolução';
+            episParaEnviar = dados.map(item => ({ nome: item.name, quantidade: item.quantity }));
         } else if (tipo === 'posse') {
             tipoDocumento = 'Demissão - Declaração de Posse';
+            episParaEnviar = dados.map(item => ({ nome: item.name, quantidade: item.quantity }));
         }
-
-        // Usa os dados passados ou faz o fallback seguro na tabela
-        let listaDados = dados;
-        if (!listaDados || listaDados.length === 0) {
-            listaDados = [];
-            // Ajuste o ID do seletor da tabela de demissão caso seja diferente no seu HTML
-            document.querySelectorAll('#tabelaDemissaoEPIs tbody tr, table tbody tr').forEach(row => {
-                let nome = row.cells[0]?.innerText.trim() || "";
-                let tamanho = row.cells[1]?.querySelector('select, input')?.value.trim() || "";
-                let qtd = parseInt(row.cells[2]?.querySelector('input')?.value) || 0;
-                if (nome) {
-                    listaDados.push({ name: nome, quantity: qtd, tamanho: tamanho });
-                }
-            });
-        }
-
-        episParaEnviar = listaDados.map(item => ({
-            nome: item.name,
-            quantidade: item.quantity,
-            tamanho: item.tamanho || ""
-        }));
-
-        const payloadData = {
-            ...baseData,
-            tipoDocumento: tipoDocumento,
-            epis: JSON.stringify(episParaEnviar)
-        };
-
-        const response = await fetch(GOOGLE_SHEETS_CONFIG.UNIFIED, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: new URLSearchParams(payloadData).toString()
-        });
-
-        console.log(`Dados de demissão (${tipoDocumento}) enviados para Google Sheets`);
-
-    } catch (error) {
-        console.error(`Erro ao enviar dados de demissão (${tipo}):`, error);
-    }
-}
 
         // 🔥 O MAIS IMPORTANTE: enviar o tipoDocumento para o Apps Script
         const data = {
@@ -6253,4 +6188,3 @@ Not an official Manus doc nor endorsed by Manus. Content may contain inaccuracie
         });
 		</script></body>
 </html>
-
