@@ -2667,10 +2667,13 @@
         // Data de entrega = data do primeiro EPI
         const dataEntrega = selectedItems.length > 0 ? selectedItems[0].date : "";
 
-        // Lista de EPIs em formato texto
-        const listaEpis = selectedItems
-            .map(item => `${item.name} (${epi.size} (${item.quantity})`)
-            .join("; ");
+        // Lista de EPIs com tamanho, em JSON — o backend usa isso para
+        // montar o texto legível (com tamanho) E gravar em "DETALHES (JSON)"
+        const episParaEnviar = selectedItems.map(item => ({
+            nome: item.name,
+            quantidade: item.quantity,
+            tamanho: item.size || ''
+        }));
 
         const data = {
             nome: document.getElementById('employeeName').value,
@@ -2682,7 +2685,7 @@
             dataAdmissao: document.getElementById('admissionDate').value,
             dataEntrega: dataEntrega,
             tipoDocumento: "Admissão",
-            listaEpis: listaEpis
+            epis: JSON.stringify(episParaEnviar)
         };
 
         await fetch(GOOGLE_SHEETS_CONFIG.UNIFIED, {
