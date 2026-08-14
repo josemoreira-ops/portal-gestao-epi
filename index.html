@@ -2669,7 +2669,7 @@
 
         // Lista de EPIs em formato texto
         const listaEpis = selectedItems
-            .map(item => `${item.name} (${item.quantity})`)
+            .map(item => `${item.name} (${epi.size} (${item.quantity})`)
             .join("; ");
 
         const data = {
