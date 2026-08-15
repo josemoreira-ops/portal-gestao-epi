@@ -268,7 +268,32 @@
             .certificado-page {
                 page-break-after: always;
                 aspect-ratio: unset;
-                height: 100vh;
+                width: 297mm;
+                height: 210mm;
+                margin: 0;
+                overflow: hidden;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                color-adjust: exact;
+            }
+
+            .certificado-page-2 {
+                page-break-after: auto;
+            }
+
+            /* Garante que o preview do certificado não herde padding extra
+               de outras regras de impressão genéricas (.preview-section) */
+            #certificadoPreviewSection.certificado-preview {
+                padding: 0 !important;
+            }
+
+            /* Força o navegador a imprimir o preenchimento amarelo do selo NR-06
+               (por padrão, cores de fundo são removidas na impressão) */
+            .certificado-nr6-badge {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                color-adjust: exact;
+                background: #fbbf24 !important;
             }
         }
         
@@ -4012,7 +4037,22 @@ Atenciosamente,`;
             // Fallback de limpeza caso o navegador não dispare 'afterprint'
             setTimeout(cleanup, 5000);
 
-            window.print();
+            // Garante que as logos (visíveis) terminaram de carregar antes de abrir
+            // a impressão — evita que a logo apareça em branco por timing
+            const previewSection = document.getElementById('certificadoPreviewSection');
+            const visibleLogos = Array.from(previewSection.querySelectorAll('img'))
+                .filter(img => !img.classList.contains('hidden'));
+
+            const waitForImages = Promise.all(visibleLogos.map(img => {
+                if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+                return new Promise(resolve => {
+                    img.addEventListener('load', resolve, { once: true });
+                    img.addEventListener('error', resolve, { once: true });
+                    setTimeout(resolve, 1500); // segurança extra
+                });
+            }));
+
+            waitForImages.then(() => window.print());
         }
 
     </script>
