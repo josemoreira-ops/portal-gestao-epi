@@ -104,6 +104,11 @@
             color: white;
         }
         
+        .landing-button.certificado {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+        
         .landing-button:hover {
             transform: translateY(-3px);
             box-shadow: 0 12px 25px rgba(0, 0, 0, 0.4);
@@ -125,6 +130,145 @@
             .landing-button {
                 padding: 16px 32px;
                 font-size: 16px;
+            }
+        }
+
+        /* ===== Certificado NR-06 ===== */
+        .certificado-preview {
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .certificado-page {
+            width: 100%;
+            aspect-ratio: 1.414 / 1;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 48px 56px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-sizing: border-box;
+            page-break-after: always;
+        }
+
+        .certificado-page-2 {
+            page-break-after: auto;
+        }
+
+        .certificado-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .certificado-title {
+            font-size: 42px;
+            font-weight: 400;
+            letter-spacing: 2px;
+            color: #1e3a5f;
+            font-family: Georgia, 'Times New Roman', serif;
+        }
+
+        .certificado-logo-container img {
+            height: 46px;
+            width: auto;
+        }
+
+        .certificado-body {
+            margin-top: 12px;
+        }
+
+        .certificado-paragraph {
+            text-align: justify;
+            line-height: 1.7;
+            color: #334155;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .certificado-conteudo h3 {
+            color: #1e3a5f;
+            font-size: 15px;
+            margin-bottom: 14px;
+        }
+
+        .certificado-conteudo ol {
+            padding-left: 20px;
+            color: #334155;
+            font-size: 13px;
+            line-height: 1.9;
+        }
+
+        .certificado-carga-horaria {
+            text-align: right;
+            font-weight: 700;
+            color: #1e3a5f;
+            margin-top: 14px;
+            font-size: 13px;
+        }
+
+        .certificado-badge {
+            display: flex;
+            justify-content: center;
+            margin: 12px 0;
+        }
+
+        .certificado-nr6-badge {
+            width: 90px;
+            height: 90px;
+            background: #fbbf24;
+            border: 3px solid #1a1a1a;
+            border-radius: 6px;
+            transform: rotate(45deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        .certificado-nr6-badge-inner {
+            transform: rotate(-45deg);
+            text-align: center;
+            font-weight: 800;
+            color: #1a1a1a;
+            line-height: 1.1;
+            font-size: 18px;
+        }
+
+        .certificado-signatures {
+            display: flex;
+            justify-content: space-between;
+            gap: 60px;
+            padding: 0 40px;
+        }
+
+        .certificado-signature-block {
+            flex: 1;
+            text-align: center;
+        }
+
+        .certificado-signature-line {
+            border-top: 1.5px solid #1e3a5f;
+            margin-bottom: 8px;
+        }
+
+        .certificado-signature-name {
+            font-size: 13px;
+            color: #1e3a5f;
+            letter-spacing: 0.5px;
+        }
+
+        .certificado-signature-role {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        @media print {
+            .certificado-page {
+                page-break-after: always;
+                aspect-ratio: unset;
+                height: 100vh;
             }
         }
         
@@ -1410,6 +1554,9 @@
                 <button class="landing-button demissao" onclick="showDemissaoFlow()">
                     Demissão de Colaborador
                 </button>
+                <button class="landing-button certificado" onclick="showCertificadoFlow()">
+                    Certificado NR-06
+                </button>
             </div>
         </div>
     </div>
@@ -1863,6 +2010,165 @@
         </div>
     </div>
 
+    <!-- Fluxo de Certificado NR-06 -->
+    <div id="certificadoFlow" class="hidden">
+        <div class="container">
+            <button class="back-button" onclick="showLandingPage()">
+                ← Voltar ao Menu Principal
+            </button>
+
+            <div class="form-section">
+                <div class="header">
+                    <h1>🎓 Certificado NR-06</h1>
+                    <p>GLOBAL ALA SERVIÇOS LTDA.</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">🏢 Selecione a Empresa</label>
+                    <select id="certificadoCompanySelect" class="form-select" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; font-weight: 600;">
+                        <option value="">Escolha uma empresa...</option>
+                        <option value="ala_solutions">ALA SOLUTIONS</option>
+                        <option value="convar">CONVAR</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">👤 Dados do Colaborador</label>
+                    <div class="employee-data-grid" style="grid-template-columns: 2fr 1fr;">
+                        <div class="employee-field">
+                            <label class="employee-label">Nome Completo</label>
+                            <input type="text" id="certificadoEmployeeName" class="employee-input" placeholder="Digite o nome completo">
+                        </div>
+                        <div class="employee-field">
+                            <label class="employee-label">CPF</label>
+                            <input type="text" id="certificadoEmployeeCPF" class="employee-input" placeholder="000.000.000-00">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">📍 Frente de Trabalho</label>
+                    <div class="employee-data-grid" style="grid-template-columns: 1fr 2fr;">
+                        <div class="employee-field">
+                            <label class="employee-label">Empresa / Local</label>
+                            <input type="text" id="certificadoWorkplaceName" class="employee-input" placeholder="Ex: MOOVE – COSAN LUBRIFICANTES E ESPECIALIDADES S.A.">
+                        </div>
+                        <div class="employee-field">
+                            <label class="employee-label">Endereço</label>
+                            <input type="text" id="certificadoWorkplaceAddress" class="employee-input" placeholder="Ex: AVENIDA IRAPURU, 561, CHICÓ, PIRACICABA - SP, 13426-700">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">🦺 Técnico de Segurança do Trabalho</label>
+                    <div class="employee-data-grid" style="grid-template-columns: 2fr 1fr 0.6fr;">
+                        <div class="employee-field">
+                            <label class="employee-label">Nome do Técnico</label>
+                            <input type="text" id="certificadoTecnicoName" class="employee-input" placeholder="Nome do técnico" value="JORGE LUIZ DE PAIVA SEBASTIÃO">
+                        </div>
+                        <div class="employee-field">
+                            <label class="employee-label">Nº MTE</label>
+                            <input type="text" id="certificadoTecnicoMTE" class="employee-input" placeholder="Ex: 52570" value="52570">
+                        </div>
+                        <div class="employee-field">
+                            <label class="employee-label">UF</label>
+                            <input type="text" id="certificadoTecnicoUF" class="employee-input" placeholder="RJ" value="RJ" maxlength="2" style="text-transform:uppercase;">
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="generateCertificadoPDF()" class="button button-primary">📄 Gerar PDF do Certificado</button>
+            </div>
+
+            <!-- Preview -->
+            <div id="certificadoPreviewSection" class="preview-section certificado-preview">
+
+                <!-- Página 1 -->
+                <div class="certificado-page" id="certificadoPage1">
+                    <div class="certificado-header">
+                        <h1 class="certificado-title">CERTIFICADO</h1>
+                        <div class="certificado-logo-container">
+                            <img id="certificadoAlaLogo" src="ala-logo.png" class="hidden" alt="Ala Solutions">
+                            <img id="certificadoConvarLogo" src="CONVAR.png" class="hidden" alt="Convar">
+                        </div>
+                    </div>
+                    <div class="certificado-body">
+                        <p class="certificado-paragraph">
+                            A <strong id="certificadoCompanyNameText">GLOBAL ALA SERVIÇOS LTDA.</strong>, situada à <span id="certificadoCompanyAddressText">Rua da Assembleia, 85/202 – Centro – Rio de Janeiro / RJ</span>, certifica que o Sr(a). <strong id="certificadoPreviewName">_________________________________</strong>, portador(a) do CPF nº <strong id="certificadoPreviewCPF">______________</strong>, participou do curso <em>"Uso, Conservação e Utilização de Equipamentos de Proteção Individual (EPI's)"</em>, ministrado em conformidade com as exigências da Norma Regulamentadora nº 6 (NR-6), instituída pela Portaria nº 3.214/1978 do MTE e atualizada pela Portaria MTP nº 2.175, de 28 de julho de 2022.
+                        </p>
+                        <p class="certificado-paragraph">
+                            O referido treinamento foi realizado para atendimento às exigências legais aplicáveis à frente de trabalho na <strong id="certificadoPreviewWorkplace">_________________________________</strong>, situada à <span id="certificadoPreviewAddress">_________________________________</span>.
+                        </p>
+                    </div>
+                    <div class="certificado-badge">
+                        <div class="certificado-nr6-badge">
+                            <div class="certificado-nr6-badge-inner">NR<br>06</div>
+                        </div>
+                    </div>
+                    <div class="certificado-signatures">
+                        <div class="certificado-signature-block">
+                            <div class="certificado-signature-line"></div>
+                            <div class="certificado-signature-name" id="certificadoSigName1">_________________________________</div>
+                            <div class="certificado-signature-role">CPF: <span id="certificadoSigCpf1">______________</span></div>
+                        </div>
+                        <div class="certificado-signature-block">
+                            <div class="certificado-signature-line"></div>
+                            <div class="certificado-signature-name" id="certificadoSigTecnico1">_________________________________</div>
+                            <div class="certificado-signature-role">TÉCNICO DE SEGURANÇA DO TRABALHO</div>
+                            <div class="certificado-signature-role" id="certificadoSigMte1">MTE/__ _____ - __</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Página 2 -->
+                <div class="certificado-page certificado-page-2" id="certificadoPage2">
+                    <div class="certificado-header">
+                        <h1 class="certificado-title">CERTIFICADO</h1>
+                        <div class="certificado-logo-container">
+                            <img id="certificadoAlaLogo2" src="ala-logo.png" class="hidden" alt="Ala Solutions">
+                            <img id="certificadoConvarLogo2" src="CONVAR.png" class="hidden" alt="Convar">
+                        </div>
+                    </div>
+                    <div class="certificado-conteudo">
+                        <h3>CONTEÚDO PROGRAMÁTICO:</h3>
+                        <ol>
+                            <li>Introdução as Normas Regulamentadoras do Ministério do Trabalho e Emprego – MTE;</li>
+                            <li>NR 06 – Conceitos Básicos;</li>
+                            <li>Responsabilidades do empregador;</li>
+                            <li>Responsabilidades do empregado;</li>
+                            <li>Responsabilidades do Fabricante;</li>
+                            <li>Conscientização ao uso correto dos EPIs;</li>
+                            <li>Equipamentos de Proteção Individual (EPI) - Conceitos Básicos, Tipos e Uso Correto;</li>
+                            <li>Demonstrativo prático dos EPIs mais usuais e seu uso correto;</li>
+                            <li>Tipos de Equipamentos por aplicação;</li>
+                            <li>Acidentes causados por mau uso dos EPI – Principais Erros, Consequências Legais, Exemplos.</li>
+                        </ol>
+                        <p class="certificado-carga-horaria">Carga Horária: 04 (quatro) horas.</p>
+                    </div>
+                    <div class="certificado-badge">
+                        <div class="certificado-nr6-badge">
+                            <div class="certificado-nr6-badge-inner">NR<br>06</div>
+                        </div>
+                    </div>
+                    <div class="certificado-signatures">
+                        <div class="certificado-signature-block">
+                            <div class="certificado-signature-line"></div>
+                            <div class="certificado-signature-name" id="certificadoSigName2">_________________________________</div>
+                            <div class="certificado-signature-role">CPF: <span id="certificadoSigCpf2">______________</span></div>
+                        </div>
+                        <div class="certificado-signature-block">
+                            <div class="certificado-signature-line"></div>
+                            <div class="certificado-signature-name" id="certificadoSigTecnico2">_________________________________</div>
+                            <div class="certificado-signature-role">TÉCNICO DE SEGURANÇA DO TRABALHO</div>
+                            <div class="certificado-signature-role" id="certificadoSigMte2">MTE/__ _____ - __</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de E-mail -->
     <div id="emailModal" class="email-modal">
         <div class="email-modal-content">
@@ -1910,18 +2216,28 @@
             document.getElementById('landingPage').classList.remove('hidden');
             document.getElementById('admissaoFlow').classList.add('hidden');
             document.getElementById('demissaoFlow').classList.add('hidden');
+            document.getElementById('certificadoFlow').classList.add('hidden');
         }
         
         function showAdmissaoFlow() {
             document.getElementById('landingPage').classList.add('hidden');
             document.getElementById('admissaoFlow').classList.remove('hidden');
             document.getElementById('demissaoFlow').classList.add('hidden');
+            document.getElementById('certificadoFlow').classList.add('hidden');
         }
         
         function showDemissaoFlow() {
             document.getElementById('landingPage').classList.add('hidden');
             document.getElementById('admissaoFlow').classList.add('hidden');
             document.getElementById('demissaoFlow').classList.remove('hidden');
+            document.getElementById('certificadoFlow').classList.add('hidden');
+        }
+
+        function showCertificadoFlow() {
+            document.getElementById('landingPage').classList.add('hidden');
+            document.getElementById('admissaoFlow').classList.add('hidden');
+            document.getElementById('demissaoFlow').classList.add('hidden');
+            document.getElementById('certificadoFlow').classList.remove('hidden');
         }
 
         // Dados dos EPIs por profissão (mantidos do original)
@@ -2999,6 +3315,7 @@ Atenciosamente,`;
             document.getElementById('landingPage').classList.add('hidden');
             document.getElementById('admissaoFlow').classList.add('hidden');
             document.getElementById('demissaoFlow').classList.remove('hidden');
+            document.getElementById('certificadoFlow').classList.add('hidden');
         }
         
         // Event listeners para o fluxo de demissão
@@ -3590,6 +3907,92 @@ Atenciosamente,`;
                 image: { type: "jpeg", quality: 0.98 },
                 html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: "in", format: "a4", orientation: "portrait" }
+            };
+            html2pdf().from(element).set(opt).save();
+        }
+
+        // ===== CERTIFICADO NR-06 =====
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const certCompanySelect = document.getElementById('certificadoCompanySelect');
+            if (certCompanySelect) {
+                certCompanySelect.addEventListener('change', function() {
+                    updateCertificadoCompany(this.value);
+                    updateCertificadoPreview();
+                });
+            }
+
+            const certFields = [
+                'certificadoEmployeeName', 'certificadoEmployeeCPF',
+                'certificadoWorkplaceName', 'certificadoWorkplaceAddress',
+                'certificadoTecnicoName', 'certificadoTecnicoMTE', 'certificadoTecnicoUF'
+            ];
+            certFields.forEach(id => {
+                const field = document.getElementById(id);
+                if (field) field.addEventListener('input', updateCertificadoPreview);
+            });
+
+            updateCertificadoPreview();
+        });
+
+        // Atualiza as logos das duas páginas do certificado
+        function updateCertificadoCompany(company) {
+            const alaLogos = [document.getElementById('certificadoAlaLogo'), document.getElementById('certificadoAlaLogo2')];
+            const convarLogos = [document.getElementById('certificadoConvarLogo'), document.getElementById('certificadoConvarLogo2')];
+
+            alaLogos.forEach(el => el && el.classList.add('hidden'));
+            convarLogos.forEach(el => el && el.classList.add('hidden'));
+
+            if (company === 'ala_solutions' && logoData.ala_solutions) {
+                alaLogos.forEach(el => { if (el) { el.src = logoData.ala_solutions; el.classList.remove('hidden'); } });
+            } else if (company === 'convar' && logoData.convar) {
+                convarLogos.forEach(el => { if (el) { el.src = logoData.convar; el.classList.remove('hidden'); } });
+            }
+        }
+
+        // Atualiza todo o texto do certificado em tempo real
+        function updateCertificadoPreview() {
+            const company = document.getElementById('certificadoCompanySelect')?.value || '';
+            const companyAddressInfo = getCompanyInfo(company);
+            const companyLegalName = (companyData[company] && companyData[company].name) || 'GLOBAL ALA SERVIÇOS LTDA.';
+
+            const name = document.getElementById('certificadoEmployeeName')?.value || '_________________________________';
+            const cpf = document.getElementById('certificadoEmployeeCPF')?.value || '______________';
+            const workplace = document.getElementById('certificadoWorkplaceName')?.value || '_________________________________';
+            const address = document.getElementById('certificadoWorkplaceAddress')?.value || '_________________________________';
+            const tecnicoName = document.getElementById('certificadoTecnicoName')?.value || '_________________________________';
+            const tecnicoMTE = document.getElementById('certificadoTecnicoMTE')?.value || '_____';
+            const tecnicoUF = (document.getElementById('certificadoTecnicoUF')?.value || '__').toUpperCase();
+
+            document.getElementById('certificadoCompanyNameText').textContent = companyLegalName;
+            document.getElementById('certificadoCompanyAddressText').textContent = companyAddressInfo.address;
+
+            document.getElementById('certificadoPreviewName').textContent = name.toUpperCase();
+            document.getElementById('certificadoPreviewCPF').textContent = cpf;
+            document.getElementById('certificadoPreviewWorkplace').textContent = workplace.toUpperCase();
+            document.getElementById('certificadoPreviewAddress').textContent = address;
+
+            ['1', '2'].forEach(n => {
+                document.getElementById(`certificadoSigName${n}`).textContent = name.toUpperCase();
+                document.getElementById(`certificadoSigCpf${n}`).textContent = cpf;
+                document.getElementById(`certificadoSigTecnico${n}`).textContent = tecnicoName.toUpperCase();
+                document.getElementById(`certificadoSigMte${n}`).textContent = `MTE/${tecnicoUF} ${tecnicoMTE} - ${tecnicoUF}`;
+            });
+        }
+
+        // Gera o PDF final (A4 paisagem, 2 páginas)
+        function generateCertificadoPDF() {
+            const employeeName = (document.getElementById('certificadoEmployeeName')?.value || '').trim().toUpperCase();
+            const pdfFileName = `CERTIFICADO NR-6 - ${employeeName || 'COLABORADOR'}.pdf`;
+
+            const element = document.getElementById('certificadoPreviewSection');
+            const opt = {
+                margin: 0,
+                filename: pdfFileName,
+                image: { type: "jpeg", quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: "in", format: "a4", orientation: "landscape" },
+                pagebreak: { mode: ['css'] }
             };
             html2pdf().from(element).set(opt).save();
         }
