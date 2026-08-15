@@ -1480,6 +1480,7 @@
             
             /* Ocultar botões de gerar PDF */
             button[onclick*="generateDemissaoPDF"],
+            button[onclick*="generateCertificadoPDF"],
             button[onclick*="generatePDF"],
             button[id*="pdfBtn"],
             button[class*="pdf-btn"],
@@ -3895,20 +3896,27 @@ Atenciosamente,`;
             closeEmailModal();
         }
         
-        // Função para gerar PDF do Termo de Devolução
+        // Função para gerar PDF do Termo de Devolução / Declaração de Posse
+        // (usa a tela de impressão nativa do navegador — o envio ao Google Sheets já
+        // aconteceu antes, em generateTermoDevolucao()/generateDeclaracaoPosse(),
+        // então continua funcionando normalmente)
         function generateDemissaoPDF() {
-            const employeeName = document.getElementById("demissaoEmployeeName").value.trim().toUpperCase();
-            const pdfFileName = `TERMO DE DEVOLUCAO - ${employeeName || "COLABORADOR"}.pdf`;
+            // Regra @page temporária garantindo retrato (o padrão global já é retrato,
+            // mas fixamos aqui por segurança, sem depender de outros overrides)
+            const printStyle = document.createElement('style');
+            printStyle.id = 'demissaoPrintOrientation';
+            printStyle.textContent = '@page { size: A4 portrait; margin: 0.5in; }';
+            document.head.appendChild(printStyle);
 
-            const element = document.getElementById("demissaoPreviewSection");
-            const opt = {
-                margin: 0.5,
-                filename: pdfFileName,
-                image: { type: "jpeg", quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: "in", format: "a4", orientation: "portrait" }
+            const cleanup = () => {
+                const el = document.getElementById('demissaoPrintOrientation');
+                if (el) el.remove();
+                window.removeEventListener('afterprint', cleanup);
             };
-            html2pdf().from(element).set(opt).save();
+            window.addEventListener('afterprint', cleanup);
+            setTimeout(cleanup, 5000);
+
+            window.print();
         }
 
         // ===== CERTIFICADO NR-06 =====
@@ -3980,21 +3988,31 @@ Atenciosamente,`;
             });
         }
 
-        // Gera o PDF final (A4 paisagem, 2 páginas)
+        // Abre a tela de impressão do sistema, forçando orientação paisagem
+        // (o arquivo não carrega a biblioteca html2pdf, então usamos o
+        // mesmo caminho de impressão nativa do navegador, como o resto do portal)
         function generateCertificadoPDF() {
-            const employeeName = (document.getElementById('certificadoEmployeeName')?.value || '').trim().toUpperCase();
-            const pdfFileName = `CERTIFICADO NR-6 - ${employeeName || 'COLABORADOR'}.pdf`;
+            // Garante que o texto do preview está atualizado antes de imprimir
+            updateCertificadoPreview();
 
-            const element = document.getElementById('certificadoPreviewSection');
-            const opt = {
-                margin: 0,
-                filename: pdfFileName,
-                image: { type: "jpeg", quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: "in", format: "a4", orientation: "landscape" },
-                pagebreak: { mode: ['css'] }
+            // Injeta uma regra @page temporária forçando A4 paisagem sem margens,
+            // sobrescrevendo o @page global (que é retrato) só durante esta impressão
+            const printStyle = document.createElement('style');
+            printStyle.id = 'certificadoPrintOrientation';
+            printStyle.textContent = '@page { size: A4 landscape; margin: 0; }';
+            document.head.appendChild(printStyle);
+
+            const cleanup = () => {
+                const el = document.getElementById('certificadoPrintOrientation');
+                if (el) el.remove();
+                window.removeEventListener('afterprint', cleanup);
             };
-            html2pdf().from(element).set(opt).save();
+            window.addEventListener('afterprint', cleanup);
+
+            // Fallback de limpeza caso o navegador não dispare 'afterprint'
+            setTimeout(cleanup, 5000);
+
+            window.print();
         }
 
     </script>
