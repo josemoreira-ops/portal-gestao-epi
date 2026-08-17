@@ -2502,6 +2502,39 @@
           ]
 };
 
+        // Tabela de referência: Número do C.A. (Certificado de Aprovação) por EPI.
+        // Preenche automaticamente a coluna "C.A." da ficha quando o item é
+        // carregado, para os equipamentos que já têm C.A. cadastrado.
+        // Itens que não estiverem aqui continuam em branco, para digitação manual.
+        const caPorEpi = {
+            "BOTINAS BI - CRIVAL": "40043",
+            "CAPACETE 3M": "29638",
+            "CINTO TRAVA-QUEDAS": "40201",
+            "LUVA DE VAQUETA": "47197",
+            "LUVA SENSIFLEX": "32036",
+            "OCULOS DE PROTECAO INCOLOR": "28018",
+            "ABAFADOR": "33835",
+            "BONE CASQUETE": "43553",
+            "PLUG AURICULAR DE SILICONE": "49349"
+        };
+
+        // Normaliza um nome de EPI para comparação: remove acentos, ignora
+        // maiúscula/minúscula e colapsa espaços — evita que pequenas variações
+        // de digitação (ex: "Luva Tátil" vs "LUVA  TATIL") quebrem a busca.
+        function normalizeEpiName(name) {
+            return (name || '')
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .toUpperCase()
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        // Busca o C.A. de um EPI pelo nome, usando o nome normalizado.
+        // Retorna string vazia se o item não tiver C.A. cadastrado.
+        function getCaForEpi(name) {
+            return caPorEpi[normalizeEpiName(name)] || '';
+        }
+
         let currentEpis = [];
 
         // Referências diretas aos arquivos de logo
@@ -2618,7 +2651,7 @@
                 currentEpis = episForProfession.map((epi, index) => ({
                     id: index,
                     name: epi,
-                    ca: '',
+                    ca: getCaForEpi(epi),
                     quantity: 1,
                     size: 'Único',
                     type: 'normal',
@@ -2682,6 +2715,11 @@
                 // Se for um nome de EPI sendo adicionado, preservar a quantidade atual
                 if (field === 'name' && value) {
                     currentEpis[index].quantity = currentQuantity; // Preservar quantidade
+                    // Preenche o C.A. automaticamente se o item tiver um cadastrado
+                    // e o campo ainda não tiver sido preenchido manualmente
+                    if (!currentEpis[index].ca) {
+                        currentEpis[index].ca = getCaForEpi(value);
+                    }
                     updateEpiTable();
                     return;
                 }
@@ -3203,12 +3241,13 @@
                 const rows = Array.from(tbody.querySelectorAll('tr')).filter(r => !r.classList.contains('empty-row'));
                 episArray = rows.map(r => {
                     const cells = r.querySelectorAll('td');
+                    const ca = (cells[1]?.querySelector('input')?.value || cells[1]?.textContent || '').trim();
                     const name = (cells[2]?.textContent || '').trim();
                     const qty = parseInt((cells[3]?.querySelector('input')?.value) || (cells[3]?.textContent) || '1') || 1;
                     const size = (cells[4]?.querySelector('select')?.value) || (cells[4]?.textContent || '').trim();
                     const type = (cells[5]?.querySelector('select')?.value) || (cells[5]?.textContent || '').trim();
                     const date = document.getElementById('admissionDate')?.value || '';
-                    return { name, quantity: qty, date, size, type, ca: '' };
+                    return { name, quantity: qty, date, size, type, ca };
                 }).filter(i => i.name);
             }
         }
