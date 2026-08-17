@@ -689,6 +689,14 @@
         .hidden {
             display: none;
         }
+
+        /* Remove a marca d'água "Made with Manus" (o elemento é recriado
+           automaticamente se removido do HTML, então escondemos por CSS) */
+        manus-content-root,
+        footer-watermark,
+        make-with-manus {
+            display: none !important;
+        }
         
         /* Indicador visual */
         .epi-indicator {
@@ -1565,6 +1573,10 @@
       });
     }
   </script>
+    <!-- Bibliotecas para geração de PDFs em lote (Certificado NR-06) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
     <!-- Tela Inicial -->
@@ -2059,30 +2071,61 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">👤 Dados do Colaborador</label>
-                    <div class="employee-data-grid" style="grid-template-columns: 2fr 1fr;">
-                        <div class="employee-field">
-                            <label class="employee-label">Nome Completo</label>
-                            <input type="text" id="certificadoEmployeeName" class="employee-input" placeholder="Digite o nome completo">
+                    <label class="form-label">⚙️ Modo de Geração</label>
+                    <div style="display:flex; gap:10px;">
+                        <button type="button" id="certModeIndividualBtn" class="button button-primary" onclick="setCertificadoMode('individual')" style="flex:1;">📄 Certificado Individual</button>
+                        <button type="button" id="certModeLoteBtn" class="button" onclick="setCertificadoMode('lote')" style="flex:1; background:#e2e8f0; color:#334155;">📦 Gerar em Lote</button>
+                    </div>
+                </div>
+
+                <!-- ===== Modo Individual ===== -->
+                <div id="certificadoIndividualSection">
+                    <div class="form-group">
+                        <label class="form-label">👤 Dados do Colaborador</label>
+                        <div class="employee-data-grid" style="grid-template-columns: 2fr 1fr;">
+                            <div class="employee-field">
+                                <label class="employee-label">Nome Completo</label>
+                                <input type="text" id="certificadoEmployeeName" class="employee-input" placeholder="Digite o nome completo">
+                            </div>
+                            <div class="employee-field">
+                                <label class="employee-label">CPF</label>
+                                <input type="text" id="certificadoEmployeeCPF" class="employee-input" placeholder="000.000.000-00">
+                            </div>
                         </div>
-                        <div class="employee-field">
-                            <label class="employee-label">CPF</label>
-                            <input type="text" id="certificadoEmployeeCPF" class="employee-input" placeholder="000.000.000-00">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">📍 Frente de Trabalho</label>
+                        <div class="employee-data-grid" style="grid-template-columns: 1fr 2fr;">
+                            <div class="employee-field">
+                                <label class="employee-label">Empresa / Local</label>
+                                <input type="text" id="certificadoWorkplaceName" class="employee-input" placeholder="Ex: MOOVE – COSAN LUBRIFICANTES E ESPECIALIDADES S.A.">
+                            </div>
+                            <div class="employee-field">
+                                <label class="employee-label">Endereço</label>
+                                <input type="text" id="certificadoWorkplaceAddress" class="employee-input" placeholder="Ex: AVENIDA IRAPURU, 561, CHICÓ, PIRACICABA - SP, 13426-700">
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">📍 Frente de Trabalho</label>
-                    <div class="employee-data-grid" style="grid-template-columns: 1fr 2fr;">
-                        <div class="employee-field">
-                            <label class="employee-label">Empresa / Local</label>
-                            <input type="text" id="certificadoWorkplaceName" class="employee-input" placeholder="Ex: MOOVE – COSAN LUBRIFICANTES E ESPECIALIDADES S.A.">
-                        </div>
-                        <div class="employee-field">
-                            <label class="employee-label">Endereço</label>
-                            <input type="text" id="certificadoWorkplaceAddress" class="employee-input" placeholder="Ex: AVENIDA IRAPURU, 561, CHICÓ, PIRACICABA - SP, 13426-700">
-                        </div>
+                <!-- ===== Modo Lote ===== -->
+                <div id="certificadoLoteSection" class="hidden">
+                    <div class="form-group">
+                        <label class="form-label">👥 Colaboradores do Lote</label>
+                        <table id="certificadoLoteTable" style="width:100%; border-collapse:collapse;">
+                            <thead>
+                                <tr style="text-align:left; font-size:12px; color:#64748b;">
+                                    <th style="padding:6px 4px;">Nome Completo</th>
+                                    <th style="padding:6px 4px;">CPF</th>
+                                    <th style="padding:6px 4px;">Empresa / Local</th>
+                                    <th style="padding:6px 4px;">Endereço</th>
+                                    <th style="padding:6px 4px; width:32px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="certificadoLoteTableBody"></tbody>
+                        </table>
+                        <button type="button" class="button" onclick="addCertificadoLoteRow()" style="margin-top:10px; background:#e2e8f0; color:#334155;">+ Adicionar Colaborador</button>
                     </div>
                 </div>
 
@@ -2104,7 +2147,13 @@
                     </div>
                 </div>
 
-                <button onclick="generateCertificadoPDF()" class="button button-primary">📄 Gerar PDF do Certificado</button>
+                <div id="certificadoIndividualActions">
+                    <button onclick="generateCertificadoPDF()" class="button button-primary">📄 Gerar PDF do Certificado</button>
+                </div>
+                <div id="certificadoLoteActions" class="hidden">
+                    <button id="certificadoLoteGenerateBtn" onclick="generateCertificadoLote()" class="button button-primary">📦 Gerar Lote (ZIP com PDFs individuais)</button>
+                    <div id="certificadoLoteProgress" style="margin-top:10px; font-size:13px; color:#334155;"></div>
+                </div>
             </div>
 
             <!-- Preview -->
@@ -2366,7 +2415,24 @@
                     "LUVA TATIL",
                     "OCULOS DE PROTEÇÃO INCOLOR",
                     "ABAFADOR",
-                    
+		   ],
+          "MOOVE - OPERADOR CONFERENTE": [
+                    "BOTINAS BI - CRIVAL",
+                    "CAPACETE 3M",
+                    "CINTO TRAVA-QUEDAS",
+                    "LUVA DE VAQUETA",
+                    "LUVA TATIL",
+                    "OCULOS DE PROTEÇÃO INCOLOR",
+                    "ABAFADOR",
+		    ],
+          "MOOVE - AUXILIAR DE LOGÍSTICA": [
+                    "BOTINAS BI - CRIVAL",
+                    "CAPACETE 3M",
+                    "CINTO TRAVA-QUEDAS",
+                    "LUVA DE VAQUETA",
+                    "LUVA TATIL",
+                    "OCULOS DE PROTEÇÃO INCOLOR",
+                    "ABAFADOR",                    
           ],
           "BOMBEIRO": [
                     "GANDOLA BPC",
@@ -3965,8 +4031,59 @@ Atenciosamente,`;
                 if (field) field.addEventListener('input', updateCertificadoPreview);
             });
 
+            // Começa com 3 linhas em branco no modo lote, pra facilitar
+            addCertificadoLoteRow();
+            addCertificadoLoteRow();
+            addCertificadoLoteRow();
+
             updateCertificadoPreview();
         });
+
+        // Alterna entre "Certificado Individual" e "Gerar em Lote"
+        function setCertificadoMode(mode) {
+            const isLote = mode === 'lote';
+
+            document.getElementById('certificadoIndividualSection').classList.toggle('hidden', isLote);
+            document.getElementById('certificadoLoteSection').classList.toggle('hidden', !isLote);
+            document.getElementById('certificadoIndividualActions').classList.toggle('hidden', isLote);
+            document.getElementById('certificadoLoteActions').classList.toggle('hidden', !isLote);
+
+            const btnInd = document.getElementById('certModeIndividualBtn');
+            const btnLote = document.getElementById('certModeLoteBtn');
+            if (isLote) {
+                btnInd.classList.remove('button-primary');
+                btnInd.style.background = '#e2e8f0';
+                btnInd.style.color = '#334155';
+                btnLote.classList.add('button-primary');
+                btnLote.style.background = '';
+                btnLote.style.color = '';
+            } else {
+                btnLote.classList.remove('button-primary');
+                btnLote.style.background = '#e2e8f0';
+                btnLote.style.color = '#334155';
+                btnInd.classList.add('button-primary');
+                btnInd.style.background = '';
+                btnInd.style.color = '';
+            }
+
+            updateCertificadoPreview();
+        }
+
+        // Adiciona uma linha em branco na tabela do lote
+        function addCertificadoLoteRow() {
+            const tbody = document.getElementById('certificadoLoteTableBody');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="padding:4px;"><input type="text" class="employee-input lote-nome" placeholder="Nome completo"></td>
+                <td style="padding:4px;"><input type="text" class="employee-input lote-cpf" placeholder="000.000.000-00"></td>
+                <td style="padding:4px;"><input type="text" class="employee-input lote-local" placeholder="Empresa / Local"></td>
+                <td style="padding:4px;"><input type="text" class="employee-input lote-endereco" placeholder="Endereço"></td>
+                <td style="padding:4px; text-align:center;">
+                    <button type="button" onclick="this.closest('tr').remove()" style="color:#dc2626; background:none; border:none; cursor:pointer; font-size:18px; line-height:1;" title="Remover">✕</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
 
         // Atualiza as logos das duas páginas do certificado
         function updateCertificadoCompany(company) {
@@ -3983,19 +4100,26 @@ Atenciosamente,`;
             }
         }
 
-        // Atualiza todo o texto do certificado em tempo real
-        function updateCertificadoPreview() {
-            const company = document.getElementById('certificadoCompanySelect')?.value || '';
+        // Atualiza todo o texto do certificado em tempo real.
+        // Sem argumento: lê os campos do formulário individual (comportamento original).
+        // Com "overrides": usado pela geração em lote, para renderizar cada colaborador
+        // sem depender dos campos do formulário individual.
+        function updateCertificadoPreview(overrides) {
+            const company = (overrides && overrides.company !== undefined)
+                ? overrides.company
+                : (document.getElementById('certificadoCompanySelect')?.value || '');
             const companyAddressInfo = getCompanyInfo(company);
             const companyLegalName = (companyData[company] && companyData[company].name) || 'GLOBAL ALA SERVIÇOS LTDA.';
 
-            const name = document.getElementById('certificadoEmployeeName')?.value || '_________________________________';
-            const cpf = document.getElementById('certificadoEmployeeCPF')?.value || '______________';
-            const workplace = document.getElementById('certificadoWorkplaceName')?.value || '_________________________________';
-            const address = document.getElementById('certificadoWorkplaceAddress')?.value || '_________________________________';
+            const name = (overrides && overrides.name) || document.getElementById('certificadoEmployeeName')?.value || '_________________________________';
+            const cpf = (overrides && overrides.cpf) || document.getElementById('certificadoEmployeeCPF')?.value || '______________';
+            const workplace = (overrides && overrides.workplace) || document.getElementById('certificadoWorkplaceName')?.value || '_________________________________';
+            const address = (overrides && overrides.address) || document.getElementById('certificadoWorkplaceAddress')?.value || '_________________________________';
             const tecnicoName = document.getElementById('certificadoTecnicoName')?.value || '_________________________________';
             const tecnicoMTE = document.getElementById('certificadoTecnicoMTE')?.value || '_____';
             const tecnicoUF = (document.getElementById('certificadoTecnicoUF')?.value || '__').toUpperCase();
+
+            if (overrides) updateCertificadoCompany(company);
 
             document.getElementById('certificadoCompanyNameText').textContent = companyLegalName;
             document.getElementById('certificadoCompanyAddressText').textContent = companyAddressInfo.address;
@@ -4013,15 +4137,27 @@ Atenciosamente,`;
             });
         }
 
+        // Espera as logos visíveis terminarem de carregar (evita logo em branco por timing)
+        function waitForCertificadoLogos() {
+            const previewSection = document.getElementById('certificadoPreviewSection');
+            const visibleLogos = Array.from(previewSection.querySelectorAll('img'))
+                .filter(img => !img.classList.contains('hidden'));
+
+            return Promise.all(visibleLogos.map(img => {
+                if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+                return new Promise(resolve => {
+                    img.addEventListener('load', resolve, { once: true });
+                    img.addEventListener('error', resolve, { once: true });
+                    setTimeout(resolve, 1500);
+                });
+            }));
+        }
+
         // Abre a tela de impressão do sistema, forçando orientação paisagem
-        // (o arquivo não carrega a biblioteca html2pdf, então usamos o
-        // mesmo caminho de impressão nativa do navegador, como o resto do portal)
+        // (usado apenas no modo Individual — o modo Lote gera PDFs de verdade via jsPDF)
         function generateCertificadoPDF() {
-            // Garante que o texto do preview está atualizado antes de imprimir
             updateCertificadoPreview();
 
-            // Injeta uma regra @page temporária forçando A4 paisagem sem margens,
-            // sobrescrevendo o @page global (que é retrato) só durante esta impressão
             const printStyle = document.createElement('style');
             printStyle.id = 'certificadoPrintOrientation';
             printStyle.textContent = '@page { size: A4 landscape; margin: 0; }';
@@ -4033,26 +4169,134 @@ Atenciosamente,`;
                 window.removeEventListener('afterprint', cleanup);
             };
             window.addEventListener('afterprint', cleanup);
-
-            // Fallback de limpeza caso o navegador não dispare 'afterprint'
             setTimeout(cleanup, 5000);
 
-            // Garante que as logos (visíveis) terminaram de carregar antes de abrir
-            // a impressão — evita que a logo apareça em branco por timing
+            waitForCertificadoLogos().then(() => window.print());
+        }
+
+        // Nome de arquivo seguro (sem caracteres que quebram download/zip)
+        function sanitizeCertificadoFilename(str) {
+            return (str || 'COLABORADOR')
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove acentos
+                .replace(/[\/\\:*?"<>|]/g, '')
+                .trim();
+        }
+
+        // Renderiza uma das páginas do certificado (elemento DOM) num canvas de alta resolução
+        async function renderCertificadoPageToCanvas(pageElement) {
+            return html2canvas(pageElement, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            });
+        }
+
+        // Gera o lote inteiro: 1 PDF por colaborador, todos dentro de um único .zip
+        async function generateCertificadoLote() {
+            if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined' || typeof JSZip === 'undefined') {
+                alert('Não foi possível carregar as bibliotecas de geração de PDF. Verifique sua conexão com a internet e tente novamente.');
+                return;
+            }
+
+            const rows = Array.from(document.querySelectorAll('#certificadoLoteTableBody tr'))
+                .map(tr => ({
+                    name: tr.querySelector('.lote-nome')?.value.trim() || '',
+                    cpf: tr.querySelector('.lote-cpf')?.value.trim() || '',
+                    workplace: tr.querySelector('.lote-local')?.value.trim() || '',
+                    address: tr.querySelector('.lote-endereco')?.value.trim() || ''
+                }))
+                .filter(row => row.name !== '');
+
+            if (rows.length === 0) {
+                alert('Adicione pelo menos um colaborador com nome preenchido antes de gerar o lote.');
+                return;
+            }
+
+            const company = document.getElementById('certificadoCompanySelect')?.value || '';
+            if (!company) {
+                alert('Selecione a empresa antes de gerar o lote.');
+                return;
+            }
+
+            const btn = document.getElementById('certificadoLoteGenerateBtn');
+            const progressEl = document.getElementById('certificadoLoteProgress');
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+
+            // Move o preview pra fora da tela durante a geração (fica "invisível"
+            // pro usuário, mas continua renderizado — o html2canvas precisa disso)
             const previewSection = document.getElementById('certificadoPreviewSection');
-            const visibleLogos = Array.from(previewSection.querySelectorAll('img'))
-                .filter(img => !img.classList.contains('hidden'));
+            const originalStyle = previewSection.getAttribute('style') || '';
+            previewSection.style.position = 'fixed';
+            previewSection.style.left = '-9999px';
+            previewSection.style.top = '0';
 
-            const waitForImages = Promise.all(visibleLogos.map(img => {
-                if (img.complete && img.naturalWidth > 0) return Promise.resolve();
-                return new Promise(resolve => {
-                    img.addEventListener('load', resolve, { once: true });
-                    img.addEventListener('error', resolve, { once: true });
-                    setTimeout(resolve, 1500); // segurança extra
-                });
-            }));
+            try {
+                const zip = new JSZip();
+                const { jsPDF } = window.jspdf;
+                const usedNames = {};
 
-            waitForImages.then(() => window.print());
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    progressEl.textContent = `Gerando ${i + 1} de ${rows.length}: ${row.name}`;
+
+                    updateCertificadoPreview({
+                        company: company,
+                        name: row.name,
+                        cpf: row.cpf,
+                        workplace: row.workplace,
+                        address: row.address
+                    });
+
+                    await waitForCertificadoLogos();
+                    // pequena pausa para garantir que o navegador aplicou o reflow do texto
+                    await new Promise(r => setTimeout(r, 60));
+
+                    const page1 = document.getElementById('certificadoPage1');
+                    const page2 = document.getElementById('certificadoPage2');
+
+                    const canvas1 = await renderCertificadoPageToCanvas(page1);
+                    const canvas2 = await renderCertificadoPageToCanvas(page2);
+
+                    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+                    pdf.addImage(canvas1.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 297, 210);
+                    pdf.addPage('a4', 'landscape');
+                    pdf.addImage(canvas2.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 297, 210);
+
+                    let filename = `CERTIFICADO NR-6 - ${sanitizeCertificadoFilename(row.name.toUpperCase())}`;
+                    if (usedNames[filename]) {
+                        usedNames[filename]++;
+                        filename += ` (${usedNames[filename]})`;
+                    } else {
+                        usedNames[filename] = 1;
+                    }
+
+                    const blob = pdf.output('blob');
+                    zip.file(`${filename}.pdf`, blob);
+                }
+
+                progressEl.textContent = 'Compactando arquivos...';
+                const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+                const url = URL.createObjectURL(zipBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `certificados_nr06_lote_${new Date().toISOString().slice(0, 10)}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+
+                progressEl.textContent = `✅ ${rows.length} certificado(s) gerado(s) com sucesso!`;
+            } catch (err) {
+                console.error('Erro ao gerar lote de certificados:', err);
+                progressEl.textContent = '❌ Ocorreu um erro ao gerar o lote. Veja o console para detalhes.';
+            } finally {
+                previewSection.setAttribute('style', originalStyle);
+                updateCertificadoPreview();
+                btn.disabled = false;
+                btn.style.opacity = '';
+            }
         }
 
     </script>
