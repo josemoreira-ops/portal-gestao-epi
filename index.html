@@ -4291,6 +4291,22 @@ Atenciosamente,`;
             previewSection.style.left = '-9999px';
             previewSection.style.top = '0';
 
+            // Força o tamanho físico exato de A4 paisagem (297mm x 210mm) nas
+            // páginas, em vez de deixá-las se ajustarem ao "aspect-ratio" relativo
+            // à tela. Sem isso, ao ficar fora da tela (position:fixed) a página
+            // perde a referência de largura do container e pode renderizar
+            // desproporcionalmente grande, fazendo o texto (tamanho fixo em px)
+            // parecer minúsculo depois de encolhido pro PDF.
+            const page1El = document.getElementById('certificadoPage1');
+            const page2El = document.getElementById('certificadoPage2');
+            const page1OriginalStyle = page1El.getAttribute('style') || '';
+            const page2OriginalStyle = page2El.getAttribute('style') || '';
+            [page1El, page2El].forEach(el => {
+                el.style.aspectRatio = 'unset';
+                el.style.width = '1122.52px';   // 297mm a 96dpi
+                el.style.height = '793.7px';    // 210mm a 96dpi
+            });
+
             try {
                 const zip = new JSZip();
                 const { jsPDF } = window.jspdf;
@@ -4353,6 +4369,8 @@ Atenciosamente,`;
                 progressEl.textContent = '❌ Ocorreu um erro ao gerar o lote. Veja o console para detalhes.';
             } finally {
                 previewSection.setAttribute('style', originalStyle);
+                page1El.setAttribute('style', page1OriginalStyle);
+                page2El.setAttribute('style', page2OriginalStyle);
                 updateCertificadoPreview();
                 btn.disabled = false;
                 btn.style.opacity = '';
