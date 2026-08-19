@@ -109,6 +109,11 @@
             color: white;
         }
         
+        .landing-button.osnr01 {
+            background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
+            color: white;
+        }
+        
         .landing-button:hover {
             transform: translateY(-3px);
             box-shadow: 0 12px 25px rgba(0, 0, 0, 0.4);
@@ -1558,6 +1563,147 @@
     }
 }
 
+/* ===== Ordem de Serviço NR-01 ===== */
+.osnr01-preview {
+    padding: 0;
+    overflow: hidden;
+    background: #e2e8f0;
+}
+
+.osnr01-page {
+    width: 210mm;
+    min-height: 297mm;
+    background: white;
+    margin: 0 auto 20px auto;
+    padding: 8mm;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    color: #1a1a1a;
+    page-break-after: always;
+}
+
+.osnr01-page-2 {
+    page-break-after: auto;
+}
+
+.osnr01-header-table, .osnr01-info-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 0;
+}
+
+.osnr01-header-table td {
+    border: 1.5px solid #000;
+    padding: 6px 10px;
+    vertical-align: middle;
+}
+
+.osnr01-header-table .osnr01-logo-cell {
+    width: 22%;
+    text-align: center;
+}
+
+.osnr01-header-table .osnr01-logo-cell img {
+    max-height: 55px;
+    max-width: 100%;
+}
+
+.osnr01-header-table .osnr01-title-cell {
+    width: 58%;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 1.3;
+}
+
+.osnr01-header-table .osnr01-pmst-cell {
+    width: 20%;
+    text-align: center;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.osnr01-intro {
+    border: 1.5px solid #000;
+    border-top: none;
+    padding: 8px 10px;
+    text-align: justify;
+    line-height: 1.5;
+}
+
+.osnr01-info-table td {
+    border: 1.5px solid #000;
+    border-top: none;
+    padding: 5px 10px;
+}
+
+.osnr01-info-table .label {
+    font-weight: bold;
+}
+
+.osnr01-section-title {
+    border: 1.5px solid #000;
+    border-top: none;
+    text-align: center;
+    font-weight: bold;
+    padding: 5px;
+    background: #f1f5f9;
+}
+
+.osnr01-section-body {
+    border: 1.5px solid #000;
+    border-top: none;
+    padding: 8px 10px;
+    line-height: 1.5;
+}
+
+.osnr01-section-body ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.osnr01-section-body li {
+    margin-bottom: 4px;
+}
+
+.osnr01-risco-row span {
+    display: block;
+    margin-bottom: 3px;
+}
+
+.osnr01-sign-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.osnr01-sign-table td {
+    border: 1.5px solid #000;
+    border-top: none;
+    padding: 18px 10px 8px 10px;
+    text-align: center;
+    font-size: 10px;
+    width: 33.33%;
+    vertical-align: bottom;
+}
+
+@media print {
+    .osnr01-page {
+        width: 210mm;
+        height: 297mm;
+        min-height: unset;
+        margin: 0;
+        page-break-after: always;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        color-adjust: exact;
+    }
+    .osnr01-section-title {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+
 </style>
   <link rel="manifest" href="/manifest.json">
   <script>
@@ -1594,6 +1740,9 @@
                 </button>
                 <button class="landing-button certificado" onclick="showCertificadoFlow()">
                     Certificado NR-06
+                </button>
+                <button class="landing-button osnr01" onclick="showOsNr01Flow()">
+                    Ordem de Serviço NR-01
                 </button>
             </div>
         </div>
@@ -1649,6 +1798,9 @@
                         <option value="RECEPCIONISTA TERNO">RECEPCIONISTA TERNO</option>
                         <option value="VIGILANTE RESENDE">VIGILANTE RESENDE</option>
                         <option value="JARDINEIRO">JARDINEIRO</option>
+                        <option value="LÍDER DE LOGÍSTICA">LÍDER DE LOGÍSTICA</option>
+                        <option value="OPERADOR LÍDER">OPERADOR LÍDER</option>
+                        <option value="TÉCNICO EM SEGURANÇA DO TRABALHO">TÉCNICO EM SEGURANÇA DO TRABALHO</option>
                     </select>
                     
                     <div id="epiIndicator" class="epi-indicator hidden">
@@ -1701,6 +1853,7 @@
                 <!-- Botões -->
                 <button onclick="scrollToTable()" id="scrollButton" class="button button-secondary hidden">📋 Ver Tabela de EPIs</button>
                 <button onclick="generatePDF()" class="button button-primary">📄 Gerar PDF</button>
+                <button onclick="importarAdmissaoParaOsNr01()" class="button" style="background:#e2e8f0; color:#334155;">📋 Gerar OS NR-01 com estes EPIs</button>
             </div>
             
             <!-- Preview da Ficha -->
@@ -1884,6 +2037,9 @@
                         <option value="RECEPCIONISTA TERNO">RECEPCIONISTA TERNO</option>
                         <option value="VIGILANTE RESENDE">VIGILANTE RESENDE</option>
                         <option value="JARDINEIRO">JARDINEIRO</option>
+                        <option value="LÍDER DE LOGÍSTICA">LÍDER DE LOGÍSTICA</option>
+                        <option value="OPERADOR LÍDER">OPERADOR LÍDER</option>
+                        <option value="TÉCNICO EM SEGURANÇA DO TRABALHO">TÉCNICO EM SEGURANÇA DO TRABALHO</option>
                     </select>
                     
                     <div id="demissaoEpiIndicator" class="epi-indicator hidden" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
@@ -2250,6 +2406,293 @@
         </div>
     </div>
 
+    <!-- Fluxo de Ordem de Serviço NR-01 -->
+    <div id="osnr01Flow" class="hidden">
+        <div class="container">
+            <button class="back-button" onclick="showLandingPage()">
+                ← Voltar ao Menu Principal
+            </button>
+
+            <div class="form-section">
+                <div class="header">
+                    <h1>📋 Ordem de Serviço NR-01</h1>
+                    <p>GLOBAL ALA SERVIÇOS LTDA.</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">🏢 Selecione a Empresa</label>
+                    <select id="osnr01CompanySelect" class="form-select" style="background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%); color: white; font-weight: 600;">
+                        <option value="">Escolha uma empresa...</option>
+                        <option value="ala_solutions">ALA SOLUTIONS</option>
+                        <option value="convar">CONVAR</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">🦺 Técnico de Segurança do Trabalho <span style="font-weight:400; color:#64748b;">(mesmo para todo o lote)</span></label>
+                    <div class="employee-data-grid" style="grid-template-columns: 2fr 1fr 0.6fr;">
+                        <div class="employee-field">
+                            <label class="employee-label">Nome do Técnico</label>
+                            <input type="text" id="osnr01TecnicoName" class="employee-input" placeholder="Nome do técnico" value="JORGE LUIZ DE PAIVA SEBASTIÃO">
+                        </div>
+                        <div class="employee-field">
+                            <label class="employee-label">Nº MTE</label>
+                            <input type="text" id="osnr01TecnicoMTE" class="employee-input" placeholder="Ex: 52570" value="52570">
+                        </div>
+                        <div class="employee-field">
+                            <label class="employee-label">UF</label>
+                            <input type="text" id="osnr01TecnicoUF" class="employee-input" placeholder="RJ" value="RJ" maxlength="2" style="text-transform:uppercase;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">⚙️ Modo de Geração</label>
+                    <div style="display:flex; gap:10px;">
+                        <button type="button" id="osnr01ModeIndividualBtn" class="button button-primary" onclick="setOsNr01Mode('individual')" style="flex:1;">📄 Individual</button>
+                        <button type="button" id="osnr01ModeLoteBtn" class="button" onclick="setOsNr01Mode('lote')" style="flex:1; background:#e2e8f0; color:#334155;">📦 Gerar em Lote</button>
+                    </div>
+                </div>
+
+                <!-- ===== Modo Individual ===== -->
+                <div id="osnr01IndividualSection">
+                    <div class="form-group">
+                        <label class="form-label">👷 Função</label>
+                        <select id="osnr01ProfessionSelect" class="form-select">
+                            <option value="">Escolha uma função...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">👤 Dados do Colaborador</label>
+                        <div class="employee-data-grid" style="grid-template-columns: 2fr 1fr;">
+                            <div class="employee-field">
+                                <label class="employee-label">Nome Completo</label>
+                                <input type="text" id="osnr01EmployeeName" class="employee-input" placeholder="Digite o nome completo">
+                            </div>
+                            <div class="employee-field">
+                                <label class="employee-label">Setor</label>
+                                <input type="text" id="osnr01Setor" class="employee-input" placeholder="Ex: Logística // Movimentação">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">📍 Local de Trabalho <span style="font-weight:400; color:#64748b;">(opcional — vazio = sede da empresa)</span></label>
+                        <input type="text" id="osnr01LocalTrabalho" class="employee-input" placeholder="Ex: MOOVE - Avenida Irapuru, 561, Chicó, Piracicaba - SP">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">⚠️ Grau de Risco <span style="font-weight:400; color:#64748b;">(conforme PGR)</span></label>
+                        <input type="text" id="osnr01GrauRisco" class="employee-input" placeholder="Ex: 03" style="max-width:120px;">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">📝 Atividades <span style="font-weight:400; color:#64748b;">(sugestão automática por função — editável)</span></label>
+                        <textarea id="osnr01Atividades" class="employee-input" rows="5" placeholder="Uma atividade por linha" style="width:100%; font-family:inherit; resize:vertical;"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">☣️ Risco e Avaliação <span style="font-weight:400; color:#64748b;">(conforme PGR / técnico)</span></label>
+                        <div class="employee-data-grid" style="grid-template-columns: 1fr 1fr;">
+                            <div class="employee-field">
+                                <label class="employee-label">Físico</label>
+                                <input type="text" id="osnr01RiscoFisico" class="employee-input" placeholder="Ex: Não Identificado">
+                            </div>
+                            <div class="employee-field">
+                                <label class="employee-label">Químico</label>
+                                <input type="text" id="osnr01RiscoQuimico" class="employee-input" placeholder="Ex: Não Identificado">
+                            </div>
+                            <div class="employee-field">
+                                <label class="employee-label">Biológico</label>
+                                <input type="text" id="osnr01RiscoBiologico" class="employee-input" placeholder="Ex: Não Identificado">
+                            </div>
+                            <div class="employee-field">
+                                <label class="employee-label">Ergonômicos</label>
+                                <input type="text" id="osnr01RiscoErgonomico" class="employee-input" placeholder="Ex: Posturas inadequadas de trabalho">
+                            </div>
+                            <div class="employee-field">
+                                <label class="employee-label">Acidentes</label>
+                                <input type="text" id="osnr01RiscoAcidentes" class="employee-input" placeholder="Ex: Queda em Mesmo Nível">
+                            </div>
+                            <div class="employee-field">
+                                <label class="employee-label">Psicossociais</label>
+                                <input type="text" id="osnr01RiscoPsicossocial" class="employee-input" placeholder="Ex: Não Identificado">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">🦺 EPIs Necessários <span style="font-weight:400; color:#64748b;">(carregados pela função — editável)</span></label>
+                        <table style="width:100%; border-collapse:collapse;">
+                            <thead>
+                                <tr style="text-align:left; font-size:12px; color:#64748b;">
+                                    <th style="padding:4px;">EPI</th>
+                                    <th style="padding:4px; width:110px;">C.A.</th>
+                                    <th style="width:32px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="osnr01EpiTableBody"></tbody>
+                        </table>
+                        <button type="button" class="button" onclick="addOsNr01EpiRow('', '')" style="margin-top:8px; background:#e2e8f0; color:#334155;">+ Adicionar EPI</button>
+                    </div>
+                </div>
+
+                <!-- ===== Modo Lote ===== -->
+                <div id="osnr01LoteSection" class="hidden">
+                    <div class="form-group">
+                        <label class="form-label">👥 Colaboradores do Lote</label>
+                        <table id="osnr01LoteTable" style="width:100%; border-collapse:collapse;">
+                            <thead>
+                                <tr style="text-align:left; font-size:12px; color:#64748b;">
+                                    <th style="padding:6px 4px;">Nome Completo</th>
+                                    <th style="padding:6px 4px;">Função</th>
+                                    <th style="padding:6px 4px;">Setor</th>
+                                    <th style="padding:6px 4px;">Local de Trabalho</th>
+                                    <th style="padding:6px 4px; width:70px;">Grau Risco</th>
+                                    <th style="padding:6px 4px; width:32px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="osnr01LoteTableBody"></tbody>
+                        </table>
+                        <button type="button" class="button" onclick="addOsNr01LoteRow()" style="margin-top:10px; background:#e2e8f0; color:#334155;">+ Adicionar Colaborador</button>
+                        <p style="font-size:12px; color:#64748b; margin-top:8px;">No lote, EPIs, Atividades e Risco e Avaliação são preenchidos automaticamente pela função de cada linha (o rascunho salvo por função) — sem edição individual por documento.</p>
+                    </div>
+                </div>
+
+                <div id="osnr01IndividualActions">
+                    <button onclick="generateOsNr01PDF()" class="button button-primary">📄 Gerar PDF da Ordem de Serviço</button>
+                </div>
+                <div id="osnr01LoteActions" class="hidden">
+                    <button id="osnr01LoteGenerateBtn" onclick="generateOsNr01Lote()" class="button button-primary">📦 Gerar Lote (ZIP com PDFs individuais)</button>
+                    <div id="osnr01LoteProgress" style="margin-top:10px; font-size:13px; color:#334155;"></div>
+                </div>
+            </div>
+
+            <!-- Preview -->
+            <div id="osnr01PreviewSection" class="preview-section osnr01-preview">
+
+                <!-- Página 1 -->
+                <div class="osnr01-page" id="osnr01Page1">
+                    <table class="osnr01-header-table">
+                        <tr>
+                            <td class="osnr01-logo-cell">
+                                <img id="osnr01AlaLogo" src="ala-logo.png" class="hidden" alt="Ala Solutions">
+                                <img id="osnr01ConvarLogo" src="CONVAR.png" class="hidden" alt="Convar">
+                            </td>
+                            <td class="osnr01-title-cell">ORDEM DE SERVIÇO – NR 1<br>SEGURANÇA DO TRABALHO</td>
+                            <td class="osnr01-pmst-cell">PMST n° 1<br>Rev. 0<br>Pág. 1 de 2</td>
+                        </tr>
+                    </table>
+                    <div class="osnr01-intro">
+                        Pela presente Ordem de serviço, objetivamos informar ao trabalhador/prestador de serviços que executem suas atividades laborais através desta empresa, conforme estabelece a NR-1, item 1.7, sobre as condições de segurança e saúde às quais estão expostos, como medida preventiva de forma a padronizar comportamentos para prevenir acidentes e/ou doenças ocupacionais.
+                    </div>
+                    <table class="osnr01-info-table">
+                        <tr>
+                            <td class="label" style="width:12%;">Empresa:</td>
+                            <td style="width:53%;" id="osnr01PreviewEmpresa">GLOBAL ALA SERVIÇOS LTDA</td>
+                            <td class="label" style="width:12%;">CNPJ:</td>
+                            <td style="width:23%;" id="osnr01PreviewCnpj">12.314.238/0001-70</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Endereço:</td>
+                            <td id="osnr01PreviewEndereco">Rua da Assembleia, 85 – Sala 202 / Centro – RJ</td>
+                            <td class="label">CNAE:</td>
+                            <td id="osnr01PreviewCnae">0.492.294-6</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Cidade:</td>
+                            <td>Rio de Janeiro - RJ</td>
+                            <td class="label">Grau de Risco:</td>
+                            <td id="osnr01PreviewGrauRisco">___</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Local de Trabalho:</td>
+                            <td colspan="3" id="osnr01PreviewLocal">GLOBAL ALA SERVIÇOS LTDA</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Nome:</td>
+                            <td id="osnr01PreviewNome">_________________________________</td>
+                            <td class="label">Função:</td>
+                            <td id="osnr01PreviewFuncao">___________________</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Setor:</td>
+                            <td colspan="3" id="osnr01PreviewSetor">___________________</td>
+                        </tr>
+                    </table>
+                    <div class="osnr01-section-title">Atividades</div>
+                    <div class="osnr01-section-body"><ul id="osnr01PreviewAtividades"></ul></div>
+                    <div class="osnr01-section-title">Risco e Avaliação</div>
+                    <div class="osnr01-section-body osnr01-risco-row">
+                        <span><strong>Físico:</strong> <span id="osnr01PreviewRiscoFisico">Não Identificado</span></span>
+                        <span><strong>Químico:</strong> <span id="osnr01PreviewRiscoQuimico">Não Identificado</span></span>
+                        <span><strong>Biológico:</strong> <span id="osnr01PreviewRiscoBiologico">Não Identificado</span></span>
+                        <span><strong>Ergonômicos:</strong> <span id="osnr01PreviewRiscoErgonomico">Não Identificado</span></span>
+                        <span><strong>Acidentes:</strong> <span id="osnr01PreviewRiscoAcidentes">Não Identificado</span></span>
+                        <span><strong>Psicossociais:</strong> <span id="osnr01PreviewRiscoPsicossocial">Não Identificado</span></span>
+                    </div>
+                    <div class="osnr01-section-title">Equipamentos de Proteção Individual (EPI) Necessários e/ou Utilizados</div>
+                    <div class="osnr01-section-body"><ul id="osnr01PreviewEpis"></ul></div>
+                </div>
+
+                <!-- Página 2 -->
+                <div class="osnr01-page osnr01-page-2" id="osnr01Page2">
+                    <table class="osnr01-header-table">
+                        <tr>
+                            <td class="osnr01-logo-cell">
+                                <img id="osnr01AlaLogo2" src="ala-logo.png" class="hidden" alt="Ala Solutions">
+                                <img id="osnr01ConvarLogo2" src="CONVAR.png" class="hidden" alt="Convar">
+                            </td>
+                            <td class="osnr01-title-cell">ORDEM DE SERVIÇO – NR 1<br>SEGURANÇA DO TRABALHO</td>
+                            <td class="osnr01-pmst-cell">PMST n° 1<br>Rev. 0<br>Pág. 2 de 2</td>
+                        </tr>
+                    </table>
+                    <div class="osnr01-section-title">Medidas Preventivas para os Riscos de Ambientais</div>
+                    <div class="osnr01-section-body">
+                        - Treinamento para execução das tarefas;<br>
+                        - Mantenha postura correta no trabalho, faça pequenas pausas durante o turno, de acordo com o combinado com a direção da empresa;<br>
+                        - Verificar o piso do ambiente, quanto aos desníveis e buracos que podem provocar acidentes;<br>
+                        - Não utilizar equipamentos improvisados ou irregulares;<br>
+                        - Use seus EPIs apenas para a finalidade a que se destinam e mantenha-os sob sua guarda e conservação;<br>
+                        - Observe atentamente o meio ambiente do trabalho ao circular no ambiente, e corrija as condições inseguras encontradas, imediatamente;<br>
+                        - Use óculos de segurança;<br>
+                        - Use luvas nitrílicas sempre que necessário;<br>
+                        - Não fume no ambiente, somente nos locais apropriados;<br>
+                        - Cuidado com manchas de óleo ou graxa;<br>
+                        - Mantenha o local limpo e organizado. A bagunça é um causador de acidentes constantemente;<br>
+                        - Obedeça a toda e qualquer sinalização de segurança existente na empresa;<br>
+                        - Em caso de incêndio, acione o alarme e siga os procedimentos operacionais padrão.
+                    </div>
+                    <div class="osnr01-section-title">Treinamentos Necessários</div>
+                    <div class="osnr01-section-body">
+                        - Uso, Conservação e higienização de EPIs;<br>
+                        - Norma Regulamentadora - NR 06.
+                    </div>
+                    <div class="osnr01-section-title">Procedimento em Caso de Acidente de Trabalho</div>
+                    <div class="osnr01-section-body">
+                        - Todo acidente de trabalho deverá ser comunicado para o superior imediato, na falta deste para o membro da CIPA e/ou ao DP, para que possa ser providenciada a emissão da CAT - Comunicação de Acidente do Trabalho, cujo prazo é de 24 horas.<br><br>
+                        Obs.: O acidente não comunicado, não será considerado para efeitos legais.
+                    </div>
+                    <div class="osnr01-section-body" style="text-align:justify;">
+                        Recebi orientação de acordo com a portaria nº 3.214 do Ministério do Trabalho, N. R. 01 sub item 1.8 "Cabe ao Empregado: a) cumprir as disposições legais e regulamentares sobre segurança e medicina do trabalho, inclusive as ordens de serviço expedidas pelo Empregador; b) usar o EPI fornecido pelo empregador; c) Submeter-se aos exames médicos previstos nas Normas regulamentadoras". NR 1.8.1 Constitui "ato faltoso a recusa injustificada ao cumprimento dos dispositivos no item anterior".
+                        <br><br>
+                        <em>Declaro que fui plenamente orientado quanto aos procedimentos de segurança do trabalho, estando ciente dos riscos decorrentes da atividade e das sanções disciplinares a que estou sujeito quanto ao seu descumprimento.</em>
+                        <br><br>
+                        "Comprometo-me a seguir os procedimentos de segurança adotados pela empresa".
+                    </div>
+                    <table class="osnr01-sign-table">
+                        <tr>
+                            <td>Data</td>
+                            <td>Ass. Funcionário<br><strong id="osnr01SigNome">_________________________________</strong></td>
+                            <td>Ass. Técnico de Segurança<br><strong id="osnr01SigTecnico">JORGE LUIZ DE PAIVA SEBASTIÃO</strong><br><span id="osnr01SigMte">MTE/RJ 52570 - RJ</span></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de E-mail -->
     <div id="emailModal" class="email-modal">
         <div class="email-modal-content">
@@ -2298,6 +2741,7 @@
             document.getElementById('admissaoFlow').classList.add('hidden');
             document.getElementById('demissaoFlow').classList.add('hidden');
             document.getElementById('certificadoFlow').classList.add('hidden');
+            document.getElementById('osnr01Flow').classList.add('hidden');
         }
         
         function showAdmissaoFlow() {
@@ -2305,6 +2749,7 @@
             document.getElementById('admissaoFlow').classList.remove('hidden');
             document.getElementById('demissaoFlow').classList.add('hidden');
             document.getElementById('certificadoFlow').classList.add('hidden');
+            document.getElementById('osnr01Flow').classList.add('hidden');
         }
         
         function showDemissaoFlow() {
@@ -2312,6 +2757,7 @@
             document.getElementById('admissaoFlow').classList.add('hidden');
             document.getElementById('demissaoFlow').classList.remove('hidden');
             document.getElementById('certificadoFlow').classList.add('hidden');
+            document.getElementById('osnr01Flow').classList.add('hidden');
         }
 
         function showCertificadoFlow() {
@@ -2319,6 +2765,15 @@
             document.getElementById('admissaoFlow').classList.add('hidden');
             document.getElementById('demissaoFlow').classList.add('hidden');
             document.getElementById('certificadoFlow').classList.remove('hidden');
+            document.getElementById('osnr01Flow').classList.add('hidden');
+        }
+
+        function showOsNr01Flow() {
+            document.getElementById('landingPage').classList.add('hidden');
+            document.getElementById('admissaoFlow').classList.add('hidden');
+            document.getElementById('demissaoFlow').classList.add('hidden');
+            document.getElementById('certificadoFlow').classList.add('hidden');
+            document.getElementById('osnr01Flow').classList.remove('hidden');
         }
 
         // Dados dos EPIs por profissão (mantidos do original)
@@ -2499,6 +2954,31 @@
                     "BOTINAS BI - CRIVAL",
                     "CAPACETE COM VISEIRA",
                     "LUVAS DE RASPA CANO CURTO"
+          ],
+          "LÍDER DE LOGÍSTICA": [
+                    "CAPACETE 3M",
+                    "CALÇADO DE SEGURANÇA",
+                    "ÓCULOS DE PROTEÇÃO",
+                    "LUVA DE VAQUETA",
+                    "CAPA DE CHUVA TRANSPARENTE",
+                    "COLETE REFLETIVO",
+                    "ABAFADOR 3M"
+          ],
+          "OPERADOR LÍDER": [
+                    "CAPACETE 3M",
+                    "CALÇADO DE SEGURANÇA",
+                    "ÓCULOS DE PROTEÇÃO",
+                    "LUVA DE VAQUETA",
+                    "CAPA DE CHUVA TRANSPARENTE",
+                    "COLETE REFLETIVO",
+                    "ABAFADOR 3M"
+          ],
+          "TÉCNICO EM SEGURANÇA DO TRABALHO": [
+                    "PROTETOR AURICULAR",
+                    "CAPACETE 3M",
+                    "CALÇADO DE SEGURANÇA",
+                    "ÓCULOS DE PROTEÇÃO",
+                    "UNIFORME"
           ]
 };
 
@@ -2506,6 +2986,60 @@
         // Preenche automaticamente a coluna "C.A." da ficha quando o item é
         // carregado, para os equipamentos que já têm C.A. cadastrado.
         // Itens que não estiverem aqui continuam em branco, para digitação manual.
+        // Tabela de referência: Atividades típicas por função, usada para
+        // pré-preencher a Ordem de Serviço NR-01. Sempre editável — serve
+        // como rascunho, não como texto travado.
+        const atividadesData = {
+            "LÍDER DE LOGÍSTICA": [
+                "Cumprir com os procedimentos definidos no manual de sistema de gestão de qualidade assegurando a aplicação dos requisitos e normas, além da integridade dos dados gerados pelo setor.",
+                "Participar e zelar pelas normas de segurança da Cia, seguindo o Sistema de Gestão Operacional, mantendo o local de trabalho limpo, organizado e adequado.",
+                "Reportar as irregularidades ou possível irregularidades, bem como desvios de controles conforme os procedimentos vigentes.",
+                "Cooperar sempre que requerido, nos Processos de Revisão de Controle e Auditorias Internas e externas.",
+                "Abastecem embalagens em linhas de produção.",
+                "Realiza colagem de etiquetas, containers, baldes e tambores.",
+                "Realizam paletização de produtos acabados.",
+                "Realizam acompanhamento de enchimento de tambores, contêineres dos envases supervisionados por operadores."
+            ],
+            "OPERADOR LÍDER": [
+                "Cumprir com os procedimentos definidos no manual de sistema de gestão de qualidade assegurando a aplicação dos requisitos e normas, além da integridade dos dados gerados pelo setor.",
+                "Participar e zelar pelas normas de segurança da Cia, seguindo o Sistema de Gestão Operacional, mantendo o local de trabalho limpo, organizado e adequado.",
+                "Reportar as irregularidades ou possível irregularidades, bem como desvios de controles conforme os procedimentos vigentes.",
+                "Cooperar sempre que requerido, nos Processos de Revisão de Controle e Auditorias Internas e externas.",
+                "Abastecem embalagens em linhas de produção.",
+                "Realiza colagem de etiquetas, containers, baldes e tambores.",
+                "Realizam paletização de produtos acabados.",
+                "Realizam acompanhamento de enchimento de tambores, contêineres dos envases supervisionados por operadores."
+            ],
+            "MOOVE PIRA - AUXILIAR DE LOGÍSTICA": [
+                "Executa atividades de apoio às operações logísticas, realizando recebimento, conferência, separação de embalagem, armazenamento, expedição de materiais e produtos.",
+                "Auxilia na movimentação manual de cargas, organização do estoque, controle de entradas e saídas, apoio em inventários e manutenção da ordem e limpeza do local de trabalho.",
+                "Pode operar equipamentos manuais e auxiliares, conforme procedimentos internos."
+            ],
+            "MOOVE PIRA - ASSISTENTE ADMINISTRATIVO": [
+                "Atividades administrativas pertinentes ao setor como faturamento, controle de estoque, arquivos e controle de caixa."
+            ],
+            "MOOVE PIRA - OPERADOR CONFERENTE": [
+                "Realiza controle de estoque, revisão dos rótulos a serem endereçados para processo produtivo na planta, dá assistência ao supervisor e controla estoque de rótulos, Realiza paletização de produtos acabados.",
+                "Cumprir com os procedimentos definidos no manual do sistema de gestão de qualidade assegurando a aplicação dos requisitos e normas de segurança da Cia além da integridade dos dados gerados pelo setor.",
+                "Responsáveis pela conferência de rótulos e cargas a serem abastecidas pelas empilhadeiras nos caminhões."
+            ],
+            "TÉCNICO EM SEGURANÇA DO TRABALHO": [
+                "Responsável por promover a segurança e a saúde dos trabalhadores, por meio da identificação, avaliação e controle dos riscos ocupacionais.",
+                "Atua na elaboração, implementação e acompanhamento das normas e procedimentos de segurança, realizando inspeções nos ambientes de trabalho, orientando colaboradores quanto ao uso correto de EPIs, investigando acidentes, participando de programas de prevenção e treinamentos, bem como no apoio ao cumprimento da legislação trabalhista e previdenciária.",
+                "Desenvolve atividades administrativas e operacionais relacionadas à SST, acompanhando documentos legais, laudos, relatórios técnicos e ações preventivas."
+            ]
+        };
+
+        // Busca as atividades sugeridas para uma função (normaliza o nome, igual
+        // ao getCaForEpi). Retorna array vazio se a função não tiver rascunho.
+        function getAtividadesForFuncao(funcao) {
+            const alvo = normalizeEpiName(funcao);
+            for (const key in atividadesData) {
+                if (normalizeEpiName(key) === alvo) return atividadesData[key];
+            }
+            return [];
+        }
+
         const caPorEpi = {
             "BOTINAS BI - CRIVAL": "40043",
             "CAPACETE 3M": "29638",
@@ -2547,11 +3081,13 @@
         const companyData = {
             ala_solutions: {
                 name: "GLOBAL ALA SERVIÇOS LTDA.",
-                cnpj: "CNPJ: 12.314.238/0001-70"
+                cnpj: "CNPJ: 12.314.238/0001-70",
+                cnae: "0.492.294-6" // TODO confirmar: modelos antigos mostraram 0.492.294-6 e 0.492.295-6 variando
             },
             convar: {
                 name: "CONVAR VIGILANCIA E SEGURANÇA LTDA.",
-                cnpj: "CNPJ.: 28.593.604/0001-08"
+                cnpj: "CNPJ.: 28.593.604/0001-08",
+                cnae: "" // TODO: preencher CNAE da CONVAR (não havia exemplo disponível)
             }
         };
 
@@ -3468,6 +4004,7 @@ Atenciosamente,`;
             document.getElementById('admissaoFlow').classList.add('hidden');
             document.getElementById('demissaoFlow').classList.remove('hidden');
             document.getElementById('certificadoFlow').classList.add('hidden');
+            document.getElementById('osnr01Flow').classList.add('hidden');
         }
         
         // Event listeners para o fluxo de demissão
@@ -4088,7 +4625,7 @@ Atenciosamente,`;
             ];
             certFields.forEach(id => {
                 const field = document.getElementById(id);
-                if (field) field.addEventListener('input', updateCertificadoPreview);
+                if (field) field.addEventListener('input', () => updateCertificadoPreview());
             });
 
             // Começa com 3 linhas em branco no modo lote, pra facilitar
@@ -4375,6 +4912,388 @@ Atenciosamente,`;
                 btn.disabled = false;
                 btn.style.opacity = '';
             }
+        }
+
+        // ===== ORDEM DE SERVIÇO NR-01 =====
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Popula a Função com as mesmas opções do professionSelect (mesma fonte, epiData)
+            const osProfSelect = document.getElementById('osnr01ProfessionSelect');
+            const sourceOptions = document.getElementById('professionSelect');
+            if (osProfSelect && sourceOptions) {
+                Array.from(sourceOptions.options).forEach(opt => {
+                    if (!opt.value) return;
+                    const clone = document.createElement('option');
+                    clone.value = opt.value;
+                    clone.textContent = opt.textContent;
+                    osProfSelect.appendChild(clone);
+                });
+                osProfSelect.addEventListener('change', function() {
+                    osnr01LoadFuncaoDefaults(this.value);
+                    updateOsNr01Preview();
+                });
+            }
+
+            const osCompanySelect = document.getElementById('osnr01CompanySelect');
+            if (osCompanySelect) {
+                osCompanySelect.addEventListener('change', function() {
+                    updateOsNr01Company(this.value);
+                    updateOsNr01Preview();
+                });
+            }
+
+            const osFields = [
+                'osnr01EmployeeName', 'osnr01Setor', 'osnr01LocalTrabalho', 'osnr01GrauRisco',
+                'osnr01Atividades', 'osnr01RiscoFisico', 'osnr01RiscoQuimico',
+                'osnr01RiscoBiologico', 'osnr01RiscoErgonomico', 'osnr01RiscoAcidentes',
+                'osnr01RiscoPsicossocial', 'osnr01TecnicoName', 'osnr01TecnicoMTE', 'osnr01TecnicoUF'
+            ];
+            osFields.forEach(id => {
+                const field = document.getElementById(id);
+                if (field) field.addEventListener('input', () => updateOsNr01Preview());
+            });
+
+            addOsNr01LoteRow();
+            addOsNr01LoteRow();
+            updateOsNr01Preview();
+        });
+
+        // Alterna entre "Individual" e "Lote"
+        function setOsNr01Mode(mode) {
+            const isLote = mode === 'lote';
+            document.getElementById('osnr01IndividualSection').classList.toggle('hidden', isLote);
+            document.getElementById('osnr01LoteSection').classList.toggle('hidden', !isLote);
+            document.getElementById('osnr01IndividualActions').classList.toggle('hidden', isLote);
+            document.getElementById('osnr01LoteActions').classList.toggle('hidden', !isLote);
+
+            const btnInd = document.getElementById('osnr01ModeIndividualBtn');
+            const btnLote = document.getElementById('osnr01ModeLoteBtn');
+            if (isLote) {
+                btnInd.classList.remove('button-primary'); btnInd.style.background = '#e2e8f0'; btnInd.style.color = '#334155';
+                btnLote.classList.add('button-primary'); btnLote.style.background = ''; btnLote.style.color = '';
+            } else {
+                btnLote.classList.remove('button-primary'); btnLote.style.background = '#e2e8f0'; btnLote.style.color = '#334155';
+                btnInd.classList.add('button-primary'); btnInd.style.background = ''; btnInd.style.color = '';
+            }
+            updateOsNr01Preview();
+        }
+
+        // Ao escolher a função no modo individual: carrega atividades + EPIs sugeridos
+        function osnr01LoadFuncaoDefaults(funcao) {
+            const atividades = getAtividadesForFuncao(funcao);
+            document.getElementById('osnr01Atividades').value = atividades.join('\n');
+
+            const tbody = document.getElementById('osnr01EpiTableBody');
+            tbody.innerHTML = '';
+            const epis = epiData[funcao] || [];
+            epis.forEach(nome => addOsNr01EpiRow(nome, getCaForEpi(nome)));
+        }
+
+        // Adiciona uma linha na tabela de EPI do modo individual
+        function addOsNr01EpiRow(nome, ca) {
+            const tbody = document.getElementById('osnr01EpiTableBody');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="padding:3px;"><input type="text" class="employee-input osnr01-epi-nome" value="${(nome || '').replace(/"/g, '&quot;')}" placeholder="Nome do EPI" oninput="updateOsNr01Preview()"></td>
+                <td style="padding:3px;"><input type="text" class="employee-input osnr01-epi-ca" value="${(ca || '').replace(/"/g, '&quot;')}" placeholder="C.A." oninput="updateOsNr01Preview()"></td>
+                <td style="text-align:center;"><button type="button" onclick="this.closest('tr').remove(); updateOsNr01Preview();" style="color:#dc2626; background:none; border:none; cursor:pointer; font-size:18px;" title="Remover">✕</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        // Adiciona uma linha em branco na tabela do lote
+        function addOsNr01LoteRow() {
+            const tbody = document.getElementById('osnr01LoteTableBody');
+            const tr = document.createElement('tr');
+            const optionsHtml = document.getElementById('osnr01ProfessionSelect').innerHTML;
+            tr.innerHTML = `
+                <td style="padding:4px;"><input type="text" class="employee-input lote-os-nome" placeholder="Nome completo"></td>
+                <td style="padding:4px;"><select class="employee-input lote-os-funcao">${optionsHtml}</select></td>
+                <td style="padding:4px;"><input type="text" class="employee-input lote-os-setor" placeholder="Setor"></td>
+                <td style="padding:4px;"><input type="text" class="employee-input lote-os-local" placeholder="Local de trabalho (opcional)"></td>
+                <td style="padding:4px;"><input type="text" class="employee-input lote-os-risco" placeholder="Ex: 03"></td>
+                <td style="text-align:center;"><button type="button" onclick="this.closest('tr').remove()" style="color:#dc2626; background:none; border:none; cursor:pointer; font-size:18px;" title="Remover">✕</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        // Atualiza as logos das duas páginas
+        function updateOsNr01Company(company) {
+            const alaLogos = [document.getElementById('osnr01AlaLogo'), document.getElementById('osnr01AlaLogo2')];
+            const convarLogos = [document.getElementById('osnr01ConvarLogo'), document.getElementById('osnr01ConvarLogo2')];
+            alaLogos.forEach(el => el && el.classList.add('hidden'));
+            convarLogos.forEach(el => el && el.classList.add('hidden'));
+            if (company === 'ala_solutions' && logoData.ala_solutions) {
+                alaLogos.forEach(el => { if (el) { el.src = logoData.ala_solutions; el.classList.remove('hidden'); } });
+            } else if (company === 'convar' && logoData.convar) {
+                convarLogos.forEach(el => { if (el) { el.src = logoData.convar; el.classList.remove('hidden'); } });
+            }
+        }
+
+        // Atualiza todo o texto do documento em tempo real.
+        // Sem argumento: lê os campos do formulário individual.
+        // Com "overrides": usado pela geração em lote.
+        function updateOsNr01Preview(overrides) {
+            const company = (overrides && overrides.company !== undefined) ? overrides.company : (document.getElementById('osnr01CompanySelect')?.value || '');
+            const info = getCompanyInfo(company);
+            const legal = (companyData[company] && companyData[company]) || { name: 'GLOBAL ALA SERVIÇOS LTDA.', cnpj: '', cnae: '' };
+
+            if (overrides) updateOsNr01Company(company);
+
+            document.getElementById('osnr01PreviewEmpresa').textContent = legal.name;
+            document.getElementById('osnr01PreviewCnpj').textContent = (legal.cnpj || '').replace(/^CNPJ\.?:\s*/i, '');
+            document.getElementById('osnr01PreviewEndereco').textContent = info.address;
+            document.getElementById('osnr01PreviewCnae').textContent = legal.cnae || '—';
+
+            const nome = (overrides && overrides.nome) || document.getElementById('osnr01EmployeeName')?.value || '_________________________________';
+            const funcao = (overrides && overrides.funcao) || document.getElementById('osnr01ProfessionSelect')?.value || '___________________';
+            const setor = (overrides && overrides.setor) || document.getElementById('osnr01Setor')?.value || '___________________';
+            const local = (overrides && overrides.local) || document.getElementById('osnr01LocalTrabalho')?.value || legal.name || '';
+            const grauRisco = (overrides && overrides.grauRisco) || document.getElementById('osnr01GrauRisco')?.value || '___';
+
+            document.getElementById('osnr01PreviewNome').textContent = nome.toUpperCase();
+            document.getElementById('osnr01PreviewFuncao').textContent = funcao;
+            document.getElementById('osnr01PreviewSetor').textContent = setor;
+            document.getElementById('osnr01PreviewLocal').textContent = local;
+            document.getElementById('osnr01PreviewGrauRisco').textContent = grauRisco;
+            document.getElementById('osnr01SigNome').textContent = nome.toUpperCase();
+
+            // Técnico de Segurança — sempre lido do formulário, igual para o lote inteiro
+            const tecnicoName = document.getElementById('osnr01TecnicoName')?.value || 'JORGE LUIZ DE PAIVA SEBASTIÃO';
+            const tecnicoMTE = document.getElementById('osnr01TecnicoMTE')?.value || '52570';
+            const tecnicoUF = (document.getElementById('osnr01TecnicoUF')?.value || 'RJ').toUpperCase();
+            document.getElementById('osnr01SigTecnico').textContent = tecnicoName.toUpperCase();
+            document.getElementById('osnr01SigMte').textContent = `MTE/${tecnicoUF} ${tecnicoMTE} - ${tecnicoUF}`;
+
+            // Atividades: overrides (lote) usa direto a função; individual lê a textarea editável
+            let atividades;
+            if (overrides) {
+                atividades = getAtividadesForFuncao(funcao);
+            } else {
+                const raw = document.getElementById('osnr01Atividades')?.value || '';
+                atividades = raw.split('\n').map(s => s.trim()).filter(Boolean);
+            }
+            const atividadesUl = document.getElementById('osnr01PreviewAtividades');
+            atividadesUl.innerHTML = atividades.length
+                ? atividades.map(a => `<li>${a}</li>`).join('')
+                : '<li>_________________________________</li>';
+
+            // Risco e Avaliação: overrides (lote) não tem valores manuais — fica "Não Identificado" por padrão
+            const rf = (overrides ? '' : document.getElementById('osnr01RiscoFisico')?.value) || 'Não Identificado';
+            const rq = (overrides ? '' : document.getElementById('osnr01RiscoQuimico')?.value) || 'Não Identificado';
+            const rb = (overrides ? '' : document.getElementById('osnr01RiscoBiologico')?.value) || 'Não Identificado';
+            const re = (overrides ? '' : document.getElementById('osnr01RiscoErgonomico')?.value) || 'Não Identificado';
+            const ra = (overrides ? '' : document.getElementById('osnr01RiscoAcidentes')?.value) || 'Não Identificado';
+            const rp = (overrides ? '' : document.getElementById('osnr01RiscoPsicossocial')?.value) || 'Não Identificado';
+            document.getElementById('osnr01PreviewRiscoFisico').textContent = rf;
+            document.getElementById('osnr01PreviewRiscoQuimico').textContent = rq;
+            document.getElementById('osnr01PreviewRiscoBiologico').textContent = rb;
+            document.getElementById('osnr01PreviewRiscoErgonomico').textContent = re;
+            document.getElementById('osnr01PreviewRiscoAcidentes').textContent = ra;
+            document.getElementById('osnr01PreviewRiscoPsicossocial').textContent = rp;
+
+            // EPIs: overrides (lote) usa direto epiData[funcao]; individual lê a tabela editável
+            let epiList;
+            if (overrides) {
+                epiList = (epiData[funcao] || []).map(nome => ({ nome, ca: getCaForEpi(nome) }));
+            } else {
+                epiList = Array.from(document.querySelectorAll('#osnr01EpiTableBody tr')).map(tr => ({
+                    nome: tr.querySelector('.osnr01-epi-nome')?.value.trim() || '',
+                    ca: tr.querySelector('.osnr01-epi-ca')?.value.trim() || ''
+                })).filter(e => e.nome);
+            }
+            const episUl = document.getElementById('osnr01PreviewEpis');
+            episUl.innerHTML = epiList.length
+                ? epiList.map(e => `<li>${e.nome}${e.ca ? ' – CA ' + e.ca : ''}</li>`).join('')
+                : '<li>_________________________________</li>';
+        }
+
+        // Espera as logos visíveis terminarem de carregar
+        function waitForOsNr01Logos() {
+            const previewSection = document.getElementById('osnr01PreviewSection');
+            const visibleLogos = Array.from(previewSection.querySelectorAll('img')).filter(img => !img.classList.contains('hidden'));
+            return Promise.all(visibleLogos.map(img => {
+                if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+                return new Promise(resolve => {
+                    img.addEventListener('load', resolve, { once: true });
+                    img.addEventListener('error', resolve, { once: true });
+                    setTimeout(resolve, 1500);
+                });
+            }));
+        }
+
+        // Impressão individual (retrato A4)
+        function generateOsNr01PDF() {
+            updateOsNr01Preview();
+
+            const printStyle = document.createElement('style');
+            printStyle.id = 'osnr01PrintOrientation';
+            printStyle.textContent = '@page { size: A4 portrait; margin: 0; }';
+            document.head.appendChild(printStyle);
+
+            const cleanup = () => {
+                const el = document.getElementById('osnr01PrintOrientation');
+                if (el) el.remove();
+                window.removeEventListener('afterprint', cleanup);
+            };
+            window.addEventListener('afterprint', cleanup);
+            setTimeout(cleanup, 5000);
+
+            waitForOsNr01Logos().then(() => window.print());
+        }
+
+        // Nome de arquivo seguro
+        function sanitizeOsNr01Filename(str) {
+            return (str || 'COLABORADOR')
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[\/\\:*?"<>|]/g, '')
+                .trim();
+        }
+
+        // Gera o lote inteiro: 1 PDF por colaborador, todos dentro de um único .zip
+        async function generateOsNr01Lote() {
+            if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined' || typeof JSZip === 'undefined') {
+                alert('Não foi possível carregar as bibliotecas de geração de PDF. Verifique sua conexão com a internet e tente novamente.');
+                return;
+            }
+
+            const rows = Array.from(document.querySelectorAll('#osnr01LoteTableBody tr')).map(tr => ({
+                nome: tr.querySelector('.lote-os-nome')?.value.trim() || '',
+                funcao: tr.querySelector('.lote-os-funcao')?.value || '',
+                setor: tr.querySelector('.lote-os-setor')?.value.trim() || '',
+                local: tr.querySelector('.lote-os-local')?.value.trim() || '',
+                grauRisco: tr.querySelector('.lote-os-risco')?.value.trim() || ''
+            })).filter(row => row.nome !== '');
+
+            if (rows.length === 0) {
+                alert('Adicione pelo menos um colaborador com nome preenchido antes de gerar o lote.');
+                return;
+            }
+            const company = document.getElementById('osnr01CompanySelect')?.value || '';
+            if (!company) {
+                alert('Selecione a empresa antes de gerar o lote.');
+                return;
+            }
+
+            const btn = document.getElementById('osnr01LoteGenerateBtn');
+            const progressEl = document.getElementById('osnr01LoteProgress');
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+
+            const previewSection = document.getElementById('osnr01PreviewSection');
+            const originalStyle = previewSection.getAttribute('style') || '';
+            previewSection.style.position = 'fixed';
+            previewSection.style.left = '-9999px';
+            previewSection.style.top = '0';
+
+            // Força o tamanho físico exato de A4 retrato (210mm x 297mm) nas páginas —
+            // mesma correção aplicada no lote do Certificado NR-06, evita texto
+            // desproporcional quando o preview fica fora da tela.
+            const page1El = document.getElementById('osnr01Page1');
+            const page2El = document.getElementById('osnr01Page2');
+            const page1OriginalStyle = page1El.getAttribute('style') || '';
+            const page2OriginalStyle = page2El.getAttribute('style') || '';
+            [page1El, page2El].forEach(el => {
+                el.style.width = '793.7px';    // 210mm a 96dpi
+                el.style.minHeight = '1122.52px'; // 297mm a 96dpi
+                el.style.height = '1122.52px';
+            });
+
+            try {
+                const zip = new JSZip();
+                const { jsPDF } = window.jspdf;
+                const usedNames = {};
+
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    progressEl.textContent = `Gerando ${i + 1} de ${rows.length}: ${row.nome}`;
+
+                    updateOsNr01Preview({
+                        company: company,
+                        nome: row.nome,
+                        funcao: row.funcao,
+                        setor: row.setor,
+                        local: row.local,
+                        grauRisco: row.grauRisco
+                    });
+
+                    await waitForOsNr01Logos();
+                    await new Promise(r => setTimeout(r, 60));
+
+                    const canvas1 = await html2canvas(page1El, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+                    const canvas2 = await html2canvas(page2El, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+
+                    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+                    pdf.addImage(canvas1.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 210, 297);
+                    pdf.addPage('a4', 'portrait');
+                    pdf.addImage(canvas2.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, 210, 297);
+
+                    let filename = `OS NR-01 - ${sanitizeOsNr01Filename(row.nome.toUpperCase())}`;
+                    if (usedNames[filename]) {
+                        usedNames[filename]++;
+                        filename += ` (${usedNames[filename]})`;
+                    } else {
+                        usedNames[filename] = 1;
+                    }
+
+                    zip.file(`${filename}.pdf`, pdf.output('blob'));
+                }
+
+                progressEl.textContent = 'Compactando arquivos...';
+                const zipBlob = await zip.generateAsync({ type: 'blob' });
+                const url = URL.createObjectURL(zipBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `os_nr01_lote_${new Date().toISOString().slice(0, 10)}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+
+                progressEl.textContent = `✅ ${rows.length} documento(s) gerado(s) com sucesso!`;
+            } catch (err) {
+                console.error('Erro ao gerar lote de OS NR-01:', err);
+                progressEl.textContent = '❌ Ocorreu um erro ao gerar o lote. Veja o console para detalhes.';
+            } finally {
+                previewSection.setAttribute('style', originalStyle);
+                page1El.setAttribute('style', page1OriginalStyle);
+                page2El.setAttribute('style', page2OriginalStyle);
+                updateOsNr01Preview();
+                btn.disabled = false;
+                btn.style.opacity = '';
+            }
+        }
+
+        // Importa dados da Admissão (nome, função, setor, EPIs já montados) para a OS NR-01
+        function importarAdmissaoParaOsNr01() {
+            const nome = document.getElementById('employeeName')?.value || '';
+            const funcao = document.getElementById('professionSelect')?.value || document.getElementById('employeeFunction')?.value || '';
+            const setor = document.getElementById('workSector')?.value || '';
+            const company = document.getElementById('companySelect')?.value || '';
+
+            showOsNr01Flow();
+
+            if (company) {
+                document.getElementById('osnr01CompanySelect').value = company;
+                updateOsNr01Company(company);
+            }
+            document.getElementById('osnr01EmployeeName').value = nome;
+            document.getElementById('osnr01Setor').value = setor;
+            if (funcao) {
+                document.getElementById('osnr01ProfessionSelect').value = funcao;
+                osnr01LoadFuncaoDefaults(funcao);
+            }
+
+            // Importa os EPIs já montados na ficha de admissão (currentEpis), com CA se houver
+            const tbody = document.getElementById('osnr01EpiTableBody');
+            if (typeof currentEpis !== 'undefined' && currentEpis.length > 0) {
+                tbody.innerHTML = '';
+                currentEpis.forEach(item => {
+                    if (item && item.name) addOsNr01EpiRow(item.name, item.ca || getCaForEpi(item.name));
+                });
+            }
+
+            updateOsNr01Preview();
         }
 
     </script>
