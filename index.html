@@ -114,6 +114,11 @@
             color: white;
         }
         
+        .landing-button.auditoria {
+            background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+            color: white;
+        }
+        
         .landing-button:hover {
             transform: translateY(-3px);
             box-shadow: 0 12px 25px rgba(0, 0, 0, 0.4);
@@ -1723,6 +1728,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
+    <!-- Bibliotecas para Fluxo de Auditoria -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
 </head>
 <body>
     <!-- Tela Inicial -->
@@ -1743,6 +1755,9 @@
                 </button>
                 <button class="landing-button osnr01" onclick="showOsNr01Flow()">
                     Ordem de Serviço NR-01
+                </button>
+                <button class="landing-button auditoria" onclick="showAuditoriaFlow()">
+                    📋 Ficha de EPI para Auditoria
                 </button>
             </div>
         </div>
@@ -2688,6 +2703,66 @@
                             <td>Ass. Técnico de Segurança<br><strong id="osnr01SigTecnico">JORGE LUIZ DE PAIVA SEBASTIÃO</strong><br><span id="osnr01SigMte">MTE/RJ 52570 - RJ</span></td>
                         </tr>
                     </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== FLUXO DE AUDITORIA - FICHA DE EPI ===== -->
+    <div id="auditoriaFlow" class="hidden">
+        <div class="flow-container">
+            <button class="back-button" onclick="showLandingPage()">
+                ← Voltar ao Menu Principal
+            </button>
+
+            <div class="form-section">
+                <div class="header">
+                    <h1>📋 Ficha de EPI para Auditoria</h1>
+                    <p>Carregue um relatório de EPIs e gere a ficha automática</p>
+                </div>
+
+                <!-- UPLOAD SECTION -->
+                <div id="auditoriaUploadSection" class="form-group" style="background:#f0fdf4; padding:20px; border-radius:8px; border-left:4px solid #22c55e;">
+                    <label class="form-label" style="color:#166534; font-weight:600;">📂 Carregar Relatório</label>
+                    <p style="margin:10px 0; color:#4b5563;">Faça upload do arquivo Excel ou PDF com o relatório de EPIs</p>
+                    
+                    <div style="display:flex; gap:10px; margin-top:15px;">
+                        <input type="file" id="auditoriaFileInput" accept=".xlsx,.xls,.pdf" style="flex:1; padding:10px; border:2px solid #ccc; border-radius:4px; cursor:pointer;">
+                        <button onclick="auditoria_processFile()" class="button button-primary">Processar ↓</button>
+                    </div>
+                </div>
+
+                <!-- RESULTADO DO PARSER -->
+                <div id="auditoriaResultSection" class="hidden" style="margin-top:20px;">
+                    
+                    <!-- Tabela de erros/avisos -->
+                    <div id="auditoriaErrorTable" class="hidden" style="background:#fef2f2; padding:15px; border-radius:8px; border-left:4px solid #ef4444; margin-bottom:20px;">
+                        <h3 style="color:#b91c1c; margin-bottom:10px;">⚠️ Itens Não Encontrados</h3>
+                        <p style="margin-bottom:10px; color:#7f1d1d; font-size:13px;">Os itens abaixo não foram encontrados no catálogo. Você pode revisar e preencher manualmente na ficha.</p>
+                        <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                            <thead>
+                                <tr style="background:#fee2e2;">
+                                    <th style="padding:8px; border:1px solid #fecaca; text-align:left;">Material (do relatório)</th>
+                                    <th style="padding:8px; border:1px solid #fecaca; text-align:center;">Quant</th>
+                                    <th style="padding:8px; border:1px solid #fecaca; text-align:center;">Data Entrega</th>
+                                    <th style="padding:8px; border:1px solid #fecaca; text-align:center;">Similaridade</th>
+                                </tr>
+                            </thead>
+                            <tbody id="auditoriaErrorTableBody"></tbody>
+                        </table>
+                        <button onclick="auditoria_continuarComErros()" class="button button-primary" style="margin-top:15px; width:100%;">✓ Continuar mesmo assim</button>
+                    </div>
+
+                    <!-- Resumo de sucesso -->
+                    <div id="auditoriaSuccessDiv" class="hidden" style="background:#f0fdf4; padding:15px; border-radius:8px; border-left:4px solid #22c55e; margin-bottom:20px;">
+                        <p style="color:#166534; font-weight:600;">✅ Relatório processado com sucesso!</p>
+                        <p style="margin-top:5px; color:#4b5563; font-size:13px;" id="auditoriaSuccessMsg"></p>
+                    </div>
+
+                    <!-- Botão para gerar ficha -->
+                    <button onclick="auditoria_generateFicha()" class="button button-primary" style="width:100%; padding:12px; font-size:16px; font-weight:600;">
+                        Gerar Ficha de EPI
+                    </button>
                 </div>
             </div>
         </div>
@@ -7891,5 +7966,204 @@ Not an official Manus doc nor endorsed by Manus. Content may contain inaccuracie
             `;
             document.head.appendChild(style);
         });
+
+// ===== FLUXO DE AUDITORIA - FICHA DE EPI PARA AUDITORIA =====
+let auditoria_parsedData = null;
+let auditoria_hasErrors = false;
+
+// ===== AUDITORIA - FUNÇÕES ISOLADAS =====
+let auditoria_parsedData = null;
+
+function auditoria_levenshteinDistance(a, b) {
+    const aLen = a.length, bLen = b.length;
+    if (aLen === 0) return bLen;
+    if (bLen === 0) return aLen;
+    const matrix = [];
+    for (let i = 0; i <= bLen; i++) matrix[i] = [i];
+    for (let j = 0; j <= aLen; j++) matrix[0][j] = j;
+    for (let i = 1; i <= bLen; i++) {
+        for (let j = 1; j <= aLen; j++) {
+            if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
+            }
+        }
+    }
+    return matrix[bLen][aLen];
+}
+
+function auditoria_calculateSimilarity(str1, str2) {
+    const distance = auditoria_levenshteinDistance(str1, str2);
+    return 1 - (distance / Math.max(str1.length, str2.length));
+}
+
+function auditoria_findEpiInCatalog(epiName, threshold = 0.85) {
+    const normalizedInput = normalizeEpiName(epiName);
+    for (let epi of allEpis) {
+        if (normalizeEpiName(epi) === normalizedInput) {
+            return { nome: epi, ca: getCaForEpi(epi) || '', score: 1.0, encontrado: true };
+        }
+    }
+    let bestMatch = null, bestScore = 0;
+    for (let epi of allEpis) {
+        const score = auditoria_calculateSimilarity(normalizedInput, normalizeEpiName(epi));
+        if (score > bestScore) {
+            bestScore = score;
+            bestMatch = { nome: epi, ca: getCaForEpi(epi) || '', score: score, encontrado: score >= threshold };
+        }
+    }
+    return bestMatch || { nome: null, ca: '', score: 0, encontrado: false };
+}
+
+async function auditoria_parseExcel(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                const firstRow = jsonData[1] ? jsonData[1].join(' ') : '';
+                const parsedData = auditoria_parseHeader(firstRow);
+                const epis = [];
+                let tableStartRow = -1;
+                for (let i = 0; i < jsonData.length; i++) {
+                    const rowText = (jsonData[i].join(' ') || '').toUpperCase();
+                    if (rowText.includes('MATERIAL') && rowText.includes('ENTREGA')) {
+                        tableStartRow = i;
+                        break;
+                    }
+                }
+                if (tableStartRow === -1) throw new Error('Tabela não encontrada');
+                for (let i = tableStartRow + 1; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if (!row || !row[1]) break;
+                    const material = row[1].toString().trim();
+                    if (material) epis.push({
+                        material_original: material,
+                        quantidade: parseInt(row[4]) || 1,
+                        data_entrega: (row[3] || '').toString().trim()
+                    });
+                }
+                parsedData.epis = epis;
+                resolve(parsedData);
+            } catch (err) {
+                reject(new Error('Erro Excel: ' + err.message));
+            }
+        };
+        reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+        reader.readAsArrayBuffer(file);
+    });
+}
+
+async function auditoria_parsePdf(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            try {
+                const pdf = await pdfjsLib.getDocument({ data: e.target.result }).promise;
+                let fullText = '';
+                for (let i = 0; i < pdf.numPages; i++) {
+                    const page = await pdf.getPage(i + 1);
+                    const text = await page.getTextContent();
+                    fullText += text.items.map(item => item.str).join(' ') + '\n';
+                }
+                const parsedData = auditoria_parseHeader(fullText);
+                const epis = [];
+                for (const line of fullText.split('\n')) {
+                    const m = line.match(/(\d+)\s+(.+?)\s+(\d{1,2}\/\d{1,2}\/\d{4})\s+(\d+)/);
+                    if (m) epis.push({ material_original: m[2].trim(), quantidade: parseInt(m[4]), data_entrega: m[3] });
+                }
+                parsedData.epis = epis;
+                resolve(parsedData);
+            } catch (err) {
+                reject(new Error('Erro PDF: ' + err.message));
+            }
+        };
+        reader.onerror = () => reject(new Error('Erro ao ler'));
+        reader.readAsArrayBuffer(file);
+    });
+}
+
+function auditoria_parseHeader(text) {
+    const f = text.match(/Funcionário\s*-\s*\d+\s*-\s*(\d+)\s*-\s*([^\n]+)/i);
+    const p = text.match(/Período\s*-\s*(\d{1,2}\/\d{1,2}\/\d{4})\s*[Aa]\s*(\d{1,2}\/\d{1,2}\/\d{4})/);
+    const c = text.match(/Coordenador\s*-\s*Posto\s*-\s*\d+\s*-\s*([^\n]+)/i);
+    return {
+        funcionario: f ? f[2].trim() : '',
+        matricula: f ? f[1].trim() : '',
+        periodoInicio: p ? p[1].trim() : '',
+        periodoFim: p ? p[2].trim() : '',
+        posto: c ? c[1].trim() : '',
+        epis: []
+    };
+}
+
+async function auditoria_processFile() {
+    const file = document.getElementById('auditoriaFileInput').files[0];
+    if (!file) { alert('Selecione um arquivo'); return; }
+    try {
+        const parsed = file.name.endsWith('.pdf') ? await auditoria_parsePdf(file) : await auditoria_parseExcel(file);
+        auditoria_parsedData = parsed;
+        const res = [], err = [];
+        for (const epi of parsed.epis) {
+            const m = auditoria_findEpiInCatalog(epi.material_original);
+            (m.encontrado ? res : err).push(m.encontrado ? {...epi, material_normalizado: m.nome, ca: m.ca, score: m.score} : {...epi, score: m.score});
+        }
+        auditoria_parsedData.epiResults = res;
+        auditoria_parsedData.epiErrors = err;
+        auditoria_showResult(res, err);
+    } catch (e) {
+        alert('Erro: ' + e.message);
+    }
+}
+
+function auditoria_showResult(res, err) {
+    document.getElementById('auditoriaResultSection').classList.remove('hidden');
+    if (err.length > 0) {
+        document.getElementById('auditoriaErrorTable').classList.remove('hidden');
+        document.getElementById('auditoriaErrorTableBody').innerHTML = err.map(e => `<tr style="border:1px solid #fecaca;"><td style="padding:8px;">${e.material_original}</td><td style="text-align:center;">${e.quantidade}</td><td style="text-align:center;">${e.data_entrega}</td><td style="text-align:center;">${(e.score*100).toFixed(0)}%</td></tr>`).join('');
+    } else {
+        document.getElementById('auditoriaErrorTable').classList.add('hidden');
+    }
+    document.getElementById('auditoriaSuccessDiv').classList.remove('hidden');
+    document.getElementById('auditoriaSuccessMsg').textContent = `${res.length} itens encontrados${err.length > 0 ? ` e ${err.length} precisam revisão` : ''}`;
+}
+
+function auditoria_continuarComErros() {
+    document.getElementById('auditoriaErrorTable').classList.add('hidden');
+}
+
+function auditoria_generateFicha() {
+    if (!auditoria_parsedData) return;
+    currentEpis = [];
+    (auditoria_parsedData.epiResults || []).forEach(e => currentEpis.push({id: currentEpis.length, name: e.material_normalizado, quantity: e.quantidade, ca: e.ca, date: e.data_entrega, customDate: true}));
+    (auditoria_parsedData.epiErrors || []).forEach(e => currentEpis.push({id: currentEpis.length, name: e.material_original, quantity: e.quantidade, ca: '', date: e.data_entrega, customDate: true}));
+    document.getElementById('employeeNameInput').value = auditoria_parsedData.funcionario || '';
+    document.getElementById('employeeCPFInput').value = auditoria_parsedData.matricula || '';
+    document.getElementById('professionSelect').value = '';
+    updateEpiTable();
+    document.getElementById('auditoriaFlow').classList.add('hidden');
+    document.getElementById('admissaoFlow').classList.remove('hidden');
+    window.scrollTo(0, 0);
+}
+
+function showAuditoriaFlow() {
+    document.getElementById('landingPage').classList.add('hidden');
+    document.getElementById('admissaoFlow').classList.add('hidden');
+    document.getElementById('demissaoFlow').classList.add('hidden');
+    document.getElementById('certificadoFlow').classList.add('hidden');
+    document.getElementById('osnr01Flow').classList.add('hidden');
+    document.getElementById('auditoriaFlow').classList.remove('hidden');
+    auditoria_parsedData = null;
+    document.getElementById('auditoriaFileInput').value = '';
+    document.getElementById('auditoriaResultSection').classList.add('hidden');
+    document.getElementById('auditoriaErrorTable').classList.add('hidden');
+    document.getElementById('auditoriaSuccessDiv').classList.add('hidden');
+    window.scrollTo(0, 0);
+}
+
 		</script></body>
 </html>
