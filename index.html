@@ -5715,6 +5715,16 @@ function auditoria_calculateSimilarity(str1, str2) {
     return 1 - (distance / Math.max(str1.length, str2.length));
 }
 
+// Remove sufixos de tamanho/unidade (ex: "- Tamanho G", "- Tam. GG", "Und", "Par") só para fins de comparação.
+// O nome original é preservado para exibição na ficha.
+function auditoria_stripSizeUnit(name) {
+    return (name || '')
+        .replace(/-?\s*Tam(anho)?\.?\s*[A-Z0-9º°]+\s*$/i, '')
+        .replace(/\b(Und|Un|Unid|Par)\.?\s*$/i, '')
+        .replace(/-?\s*Tam(anho)?\.?\s*[A-Z0-9º°]+\s*$/i, '') // roda 2x (ex: "Tamanho G Und" -> remove unidade, depois tamanho)
+        .trim();
+}
+
 function auditoria_findEpiInCatalog(epiName, threshold = 0.85) {
     const normalizedInput = normalizeEpiName(epiName);
     for (let epi of allEpis) {
@@ -5722,9 +5732,22 @@ function auditoria_findEpiInCatalog(epiName, threshold = 0.85) {
             return { nome: epi, ca: getCaForEpi(epi) || '', score: 1.0, encontrado: true };
         }
     }
+    // Se não houve match exato, tenta de novo ignorando sufixos de tamanho/unidade
+    // (ex: "Luva Tatil Black Volk - Tamanho G par" -> "Luva Tatil Black Volk")
+    const strippedInput = normalizeEpiName(auditoria_stripSizeUnit(epiName));
+    if (strippedInput && strippedInput !== normalizedInput) {
+        for (let epi of allEpis) {
+            if (normalizeEpiName(epi) === strippedInput) {
+                return { nome: epi, ca: getCaForEpi(epi) || '', score: 1.0, encontrado: true };
+            }
+        }
+    }
     let bestMatch = null, bestScore = 0;
     for (let epi of allEpis) {
-        const score = auditoria_calculateSimilarity(normalizedInput, normalizeEpiName(epi));
+        const catalogNorm = normalizeEpiName(epi);
+        const scoreFull = auditoria_calculateSimilarity(normalizedInput, catalogNorm);
+        const scoreStripped = strippedInput ? auditoria_calculateSimilarity(strippedInput, catalogNorm) : 0;
+        const score = Math.max(scoreFull, scoreStripped);
         if (score > bestScore) {
             bestScore = score;
             bestMatch = { nome: epi, ca: getCaForEpi(epi) || '', score: score, encontrado: score >= threshold };
@@ -5784,13 +5807,26 @@ async function auditoria_parsePdf(file) {
                 let fullText = '';
                 for (let i = 0; i < pdf.numPages; i++) {
                     const page = await pdf.getPage(i + 1);
-                    const text = await page.getTextContent();
-                    fullText += text.items.map(item => item.str).join(' ') + '\n';
+                    const textContent = await page.getTextContent();
+                    // Agrupa itens de texto por posição vertical (Y) para reconstruir linhas reais,
+                    // já que o pdf.js retorna cada fragmento de texto separadamente, sem quebras de linha.
+                    const lineMap = {};
+                    textContent.items.forEach(item => {
+                        const y = Math.round(item.transform[5] / 2) * 2; // agrupa com tolerância de 2px
+                        if (!lineMap[y]) lineMap[y] = [];
+                        lineMap[y].push(item);
+                    });
+                    const sortedY = Object.keys(lineMap).map(Number).sort((a, b) => b - a); // topo -> base
+                    const pageLines = sortedY.map(y =>
+                        lineMap[y].sort((a, b) => a.transform[4] - b.transform[4]).map(it => it.str).join(' ').replace(/\s+/g, ' ').trim()
+                    );
+                    fullText += pageLines.join('\n') + '\n';
                 }
                 const parsedData = auditoria_parseHeader(fullText);
                 const epis = [];
                 for (const line of fullText.split('\n')) {
-                    const m = line.match(/(\d+)\s+(.+?)\s+(\d{1,2}\/\d{1,2}\/\d{4})\s+(\d+)/);
+                    // Formato esperado da linha: Código Material[+Unidade] DataEntrega Quantidade Valor Total
+                    const m = line.match(/^(\d+)\s+(.+?)\s+(\d{1,2}\/\d{1,2}\/\d{2,4})\s+(\d+)\s+[\d.,]+\s+[\d.,]+\s*$/);
                     if (m) epis.push({ material_original: m[2].trim(), quantidade: parseInt(m[4]), data_entrega: m[3] });
                 }
                 parsedData.epis = epis;
@@ -5805,9 +5841,9 @@ async function auditoria_parsePdf(file) {
 }
 
 function auditoria_parseHeader(text) {
-    const f = text.match(/Funcionário\s*-\s*\d+\s*-\s*(\d+)\s*-\s*([^\n]+)/i);
-    const p = text.match(/Período\s*-\s*(\d{1,2}\/\d{1,2}\/\d{4})\s*[Aa]\s*(\d{1,2}\/\d{1,2}\/\d{4})/);
-    const c = text.match(/Coordenador\s*-\s*Posto\s*-\s*\d+\s*-\s*([^\n]+)/i);
+    const f = text.match(/Funcionário\s*-\s*\d+\s*-\s*(\d+)\s*-\s*(.+?)(?=\s*Per[ií]odo\s*-|\n|$)/i);
+    const p = text.match(/Per[ií]odo\s*-\s*(\d{1,2}\/\d{1,2}\/\d{4})\s*[Aa]\s*(\d{1,2}\/\d{1,2}\/\d{4})/);
+    const c = text.match(/Coordenador\s*-\s*Posto\s*-\s*\d+\s*-\s*\d+\s*-\s*(.+?)(?=\n|$)/i);
     return {
         funcionario: f ? f[2].trim() : '',
         matricula: f ? f[1].trim() : '',
@@ -5848,39 +5884,3 @@ function auditoria_showResult(res, err) {
     document.getElementById('auditoriaSuccessDiv').classList.remove('hidden');
     document.getElementById('auditoriaSuccessMsg').textContent = `${res.length} itens encontrados${err.length > 0 ? ` e ${err.length} precisam revisão` : ''}`;
 }
-
-function auditoria_continuarComErros() {
-    document.getElementById('auditoriaErrorTable').classList.add('hidden');
-}
-
-function auditoria_generateFicha() {
-    if (!auditoria_parsedData) return;
-    currentEpis = [];
-    (auditoria_parsedData.epiResults || []).forEach(e => currentEpis.push({id: currentEpis.length, name: e.material_normalizado, quantity: e.quantidade, ca: e.ca, date: e.data_entrega, customDate: true}));
-    (auditoria_parsedData.epiErrors || []).forEach(e => currentEpis.push({id: currentEpis.length, name: e.material_original, quantity: e.quantidade, ca: '', date: e.data_entrega, customDate: true}));
-    document.getElementById('employeeNameInput').value = auditoria_parsedData.funcionario || '';
-    document.getElementById('employeeCPFInput').value = auditoria_parsedData.matricula || '';
-    document.getElementById('professionSelect').value = '';
-    updateEpiTable();
-    document.getElementById('auditoriaFlow').classList.add('hidden');
-    document.getElementById('admissaoFlow').classList.remove('hidden');
-    window.scrollTo(0, 0);
-}
-
-function showAuditoriaFlow() {
-    document.getElementById('landingPage').classList.add('hidden');
-    document.getElementById('admissaoFlow').classList.add('hidden');
-    document.getElementById('demissaoFlow').classList.add('hidden');
-    document.getElementById('certificadoFlow').classList.add('hidden');
-    document.getElementById('osnr01Flow').classList.add('hidden');
-    document.getElementById('auditoriaFlow').classList.remove('hidden');
-    auditoria_parsedData = null;
-    document.getElementById('auditoriaFileInput').value = '';
-    document.getElementById('auditoriaResultSection').classList.add('hidden');
-    document.getElementById('auditoriaErrorTable').classList.add('hidden');
-    document.getElementById('auditoriaSuccessDiv').classList.add('hidden');
-    window.scrollTo(0, 0);
-}
-
-		</script></body>
-</html>
