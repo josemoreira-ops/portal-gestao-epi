@@ -5387,14 +5387,51 @@ Atenciosamente,`;
             return 1 - (auditoria_levenshteinDistance(a, b) / Math.max(a.length, b.length));
         }
 
-        // Remove sufixos de tamanho/unidade (ex: "- Tamanho G", "- Tam. Único", "Und", "Par") só para comparação.
-        // O nome original é sempre preservado para exibição na ficha.
+        // ----- Tamanho / unidade / data (usados na leitura de Excel e PDF) -----
+        // Marcadores de tamanho aceitos no FINAL do nome: "Tamanho", "Tam.", "Tam.:", "T.:" (com ou sem ":").
+        const AUDITORIA_SIZE_TAIL = /(?:^|\s*-\s*|\s+)(?:Tamanho(?=[\s:])|Tam\.|Tam(?=[\s:])|T\.)\s*:?\s*(\S+)\s*$/i;
+        // Mesmo marcador em qualquer posição (só para detectar tamanho "no meio" do nome -> revisão manual).
+        const AUDITORIA_SIZE_ANYWHERE = /(?:^|[\s-])(?:Tamanho(?=[\s:])|Tam\.|Tam(?=[\s:])|T\.)/i;
+        // Unidade de medida no final do nome (ex: "Und", "par").
+        const AUDITORIA_UNIT_TAIL = /\s+(?:Und|Un|Unid|Par)\.?\s*$/i;
+
+        // Separa o texto de material do relatório em { nome, tamanho, revisar, motivo }:
+        // - remove a unidade de medida do final ("Und", "par")
+        // - extrai o tamanho do final do nome ("- Tamanho 42", "Tam. M", "T.: 40"); sem marcador => "Único"
+        // - marcador de tamanho no MEIO do nome não é interpretado: devolve revisar=true (revisão manual)
+        function auditoria_splitMaterial(raw) {
+            let nome = String(raw || '').replace(/\s+/g, ' ').trim();
+            nome = nome.replace(AUDITORIA_UNIT_TAIL, '').trim();
+            const m = nome.match(AUDITORIA_SIZE_TAIL);
+            if (m) {
+                return { nome: nome.slice(0, m.index).replace(/[\s-]+$/, '').trim(), tamanho: m[1], revisar: false, motivo: '' };
+            }
+            if (AUDITORIA_SIZE_ANYWHERE.test(nome)) {
+                return { nome, tamanho: 'Único', revisar: true, motivo: 'Tamanho no meio do nome - revisar' };
+            }
+            return { nome, tamanho: 'Único', revisar: false, motivo: '' };
+        }
+
+        // Nome sem tamanho/unidade (usado só na comparação com o catálogo).
         function auditoria_stripSizeUnit(name) {
-            return (name || '')
-                .replace(/-?\s*Tam(anho)?\.?\s*\S+\s*$/i, '')
-                .replace(/\b(Und|Un|Unid|Par)\.?\s*$/i, '')
-                .replace(/-?\s*Tam(anho)?\.?\s*\S+\s*$/i, '')
-                .trim();
+            return auditoria_splitMaterial(name).nome;
+        }
+
+        // Converte data do Excel (número de série) ou texto para DD/MM/AAAA. Retorna '' se não reconhecer.
+        function auditoria_formatDate(v) {
+            const pad = n => String(n).padStart(2, '0');
+            if (v === null || v === undefined) return '';
+            if (typeof v === 'number') {
+                const d = XLSX.SSF.parse_date_code(v);
+                return (d && d.y >= 1990 && d.y <= 2100) ? `${pad(d.d)}/${pad(d.m)}/${d.y}` : '';
+            }
+            const s = String(v).trim();
+            if (/^\d{5}(\.\d+)?$/.test(s)) return auditoria_formatDate(Number(s));
+            let m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            if (m && +m[1] >= 1 && +m[1] <= 31 && +m[2] >= 1 && +m[2] <= 12) return `${pad(m[1])}/${pad(m[2])}/${m[3]}`;
+            m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (m && +m[2] >= 1 && +m[2] <= 12 && +m[3] >= 1 && +m[3] <= 31) return `${m[3]}/${m[2]}/${m[1]}`;
+            return '';
         }
 
         function auditoria_tokenize(normStr) {
@@ -5459,23 +5496,42 @@ Atenciosamente,`;
                         const workbook = XLSX.read(data, { type: 'array' });
                         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                         const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                        const firstRow = jsonData[1] ? jsonData[1].join(' ') : '';
-                        const parsedData = auditoria_parseHeader(firstRow);
-                        const epis = [];
+
+                        // 1) linha de cabeçalho da tabela (Material / Entrega)
                         let tableStartRow = -1;
                         for (let i = 0; i < jsonData.length; i++) {
-                            const rowText = (jsonData[i].join(' ') || '').toUpperCase();
+                            const rowText = ((jsonData[i] || []).join(' ') || '').toUpperCase();
                             if (rowText.includes('MATERIAL') && rowText.includes('ENTREGA')) { tableStartRow = i; break; }
                         }
                         if (tableStartRow === -1) throw new Error('Tabela não encontrada no arquivo');
+
+                        // 2) cabeçalho do relatório (Funcionário, Posto...) = tudo que está acima da tabela
+                        const headerText = jsonData.slice(0, tableStartRow).map(r => (r || []).join(' ')).join('\n');
+                        const parsedData = auditoria_parseHeader(headerText);
+
+                        // 3) colunas localizadas pelo nome do cabeçalho (com fallback para as posições habituais)
+                        const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toUpperCase();
+                        const head = Array.from(jsonData[tableStartRow] || [], norm);
+                        let colMat = head.indexOf('MATERIAL');
+                        let colEnt = head.indexOf('ENTREGA');
+                        let colQtd = head.findIndex(h => h.startsWith('QUANT'));
+                        if (colMat < 0) colMat = 1;
+                        if (colEnt < 0) colEnt = 3;
+                        if (colQtd < 0) colQtd = 4;
+
+                        // 4) itens: ignora linhas vazias no meio; termina na linha de Total
+                        const epis = [];
                         for (let i = tableStartRow + 1; i < jsonData.length; i++) {
-                            const row = jsonData[i];
-                            if (!row || !row[1]) break;
-                            const material = row[1].toString().trim();
-                            if (material) epis.push({
+                            const row = jsonData[i] || [];
+                            const material = String(row[colMat] || '').trim();
+                            if (!material) {
+                                if (/TOTAL|TOT GERAL/.test((row.join(' ') || '').toUpperCase())) break;
+                                continue;
+                            }
+                            epis.push({
                                 material_original: material,
-                                quantidade: parseInt(row[4]) || 1,
-                                data_entrega: (row[3] || '').toString().trim()
+                                quantidade: parseInt(row[colQtd]) || 1,
+                                data_entrega: row[colEnt]   // número de série ou texto; convertido depois em auditoria_formatDate
                             });
                         }
                         parsedData.epis = epis;
@@ -5531,15 +5587,16 @@ Atenciosamente,`;
         }
 
         function auditoria_parseHeader(text) {
-            const f = text.match(/Funcionário\s*-\s*\d+\s*-\s*(\d+)\s*-\s*(.+?)(?=\s*Per[ií]odo\s*-|\n|$)/i);
-            const p = text.match(/Per[ií]odo\s*-\s*(\d{1,2}\/\d{1,2}\/\d{4})\s*[Aa]\s*(\d{1,2}\/\d{1,2}\/\d{4})/);
-            const c = text.match(/Coordenador\s*-\s*Posto\s*-\s*\d+\s*-\s*\d+\s*-\s*(.+?)(?=\n|$)/i);
+            text = String(text || '').normalize('NFC');
+            const f = text.match(/Funcion[aá]rio\s*-\s*\d+\s*-\s*(\d+)\s*-\s*(.+?)(?=\s*Per[ií]odo\s*-|\n|$)/i);
+            // Setor = nome do cliente no campo "Posto": ignora só o código numérico inicial ("06 - 000058 - ")
+            // e mantém todo o resto como está (inclusive números que façam parte do nome do cliente).
+            const p = text.match(/Posto\s*-\s*(.+?)\s*$/im);
+            const posto = p ? p[1].replace(/^(?:\d+\s*-\s*)+/, '').trim() : '';
             return {
                 funcionario: f ? f[2].trim() : '',
                 matricula: f ? f[1].trim() : '',
-                periodoInicio: p ? p[1].trim() : '',
-                periodoFim: p ? p[2].trim() : '',
-                posto: c ? c[1].trim() : '',
+                posto: posto,
                 epis: []
             };
         }
@@ -5552,9 +5609,18 @@ Atenciosamente,`;
                 auditoria_parsedData = parsed;
                 const res = [], err = [];
                 for (const epi of parsed.epis) {
-                    const m = auditoria_findEpiInCatalog(epi.material_original);
-                    if (m.encontrado) res.push({ ...epi, material_normalizado: m.nome, ca: m.ca, score: m.score });
-                    else err.push({ ...epi, score: m.score });
+                    const sp = auditoria_splitMaterial(epi.material_original);
+                    const data = auditoria_formatDate(epi.data_entrega);
+                    const base = { ...epi, nome_limpo: sp.nome, tamanho: sp.tamanho, data_entrega: data };
+                    // Tamanho no meio do nome ou data inválida/ausente: não adivinha, vai para revisão manual.
+                    if (sp.revisar || !data) {
+                        err.push({ ...base, data_entrega: data || String(epi.data_entrega ?? ''), score: 0,
+                                   motivo: sp.revisar ? sp.motivo : 'Data de entrega ausente ou não reconhecida' });
+                        continue;
+                    }
+                    const m = auditoria_findEpiInCatalog(sp.nome);
+                    if (m.encontrado) res.push({ ...base, material_normalizado: m.nome, ca: m.ca, score: m.score });
+                    else err.push({ ...base, score: m.score });
                 }
                 auditoria_parsedData.epiResults = res;
                 auditoria_parsedData.epiErrors = err;
@@ -5568,12 +5634,19 @@ Atenciosamente,`;
             document.getElementById('auditoriaResultSection').classList.remove('hidden');
             if (err.length > 0) {
                 document.getElementById('auditoriaErrorTable').classList.remove('hidden');
-                document.getElementById('auditoriaErrorTableBody').innerHTML = err.map(e => `<tr style="border:1px solid #fecaca;"><td style="padding:8px; border:1px solid #fecaca;">${e.material_original}</td><td style="padding:8px; border:1px solid #fecaca; text-align:center;">${e.quantidade}</td><td style="padding:8px; border:1px solid #fecaca; text-align:center;">${e.data_entrega}</td><td style="padding:8px; border:1px solid #fecaca; text-align:center;">${(e.score*100).toFixed(0)}%</td></tr>`).join('');
+                document.getElementById('auditoriaErrorTableBody').innerHTML = err.map(e => `<tr style="border:1px solid #fecaca;"><td style="padding:8px; border:1px solid #fecaca;">${e.material_original}</td><td style="padding:8px; border:1px solid #fecaca; text-align:center;">${e.quantidade}</td><td style="padding:8px; border:1px solid #fecaca; text-align:center;">${e.data_entrega}</td><td style="padding:8px; border:1px solid #fecaca; text-align:center;">${e.motivo || (e.score*100).toFixed(0) + '%'}</td></tr>`).join('');
             } else {
                 document.getElementById('auditoriaErrorTable').classList.add('hidden');
             }
             document.getElementById('auditoriaSuccessDiv').classList.remove('hidden');
-            document.getElementById('auditoriaSuccessMsg').textContent = `${res.length} itens encontrados automaticamente${err.length > 0 ? ` e ${err.length} precisam de revisão manual` : '.'}`;
+            let msg = `${res.length} itens encontrados automaticamente${err.length > 0 ? ` e ${err.length} precisam de revisão manual` : ''}.`;
+            const d = auditoria_parsedData || {};
+            const faltando = [];
+            if (!d.funcionario) faltando.push('nome');
+            if (!d.matricula) faltando.push('matrícula');
+            if (!d.posto) faltando.push('setor');
+            if (faltando.length) msg += ` Atenção: não consegui ler ${faltando.join(', ')} do cabeçalho; preencha manualmente na ficha.`;
+            document.getElementById('auditoriaSuccessMsg').textContent = msg;
         }
 
         function auditoria_continuarComErros() {
@@ -5583,11 +5656,25 @@ Atenciosamente,`;
         function auditoria_generateFicha() {
             if (!auditoria_parsedData) { alert('Nenhum arquivo foi processado'); return; }
             currentEpis = [];
-            (auditoria_parsedData.epiResults || []).forEach(e => currentEpis.push({ id: currentEpis.length, name: e.material_normalizado, quantity: e.quantidade, ca: e.ca, date: e.data_entrega, customDate: true }));
-            (auditoria_parsedData.epiErrors || []).forEach(e => currentEpis.push({ id: currentEpis.length, name: e.material_original, quantity: e.quantidade, ca: '', date: e.data_entrega, customDate: true }));
+            // Mesma estrutura de item usada pelo fluxo de Admissão (inclui size, type e rubrica).
+            const novoItem = (nome, e, ca) => ({
+                id: currentEpis.length, name: nome, quantity: e.quantidade, ca: ca,
+                size: e.tamanho || 'Único', type: 'normal', rubrica: '',
+                date: e.data_entrega, customDate: true
+            });
+            (auditoria_parsedData.epiResults || []).forEach(e => currentEpis.push(novoItem(e.material_normalizado, e, e.ca)));
+            (auditoria_parsedData.epiErrors || []).forEach(e => currentEpis.push(novoItem(e.nome_limpo || e.material_original, e, '')));
+            // Campos que vêm do relatório
             document.getElementById('employeeName').value = auditoria_parsedData.funcionario || '';
             document.getElementById('employeeId').value = auditoria_parsedData.matricula || '';
+            document.getElementById('workSector').value = auditoria_parsedData.posto || '';
+            // Campos que ficam em branco para preenchimento manual (evita sobrar dado de uma Admissão anterior)
+            document.getElementById('professionSelect').value = '';
+            document.getElementById('employeeFunction').value = '';
+            document.getElementById('admissionDate').value = '';
+            document.getElementById('phone').value = '';
             updateEpiTable();
+            updatePreview();   // atualiza o cabeçalho da ficha (preencher por código não dispara o evento de digitação)
             document.getElementById('auditoriaFlow').classList.add('hidden');
             document.getElementById('admissaoFlow').classList.remove('hidden');
             window.scrollTo(0, 0);
